@@ -266,8 +266,7 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
       {   
           if(!--Intentos_conexion_NTP)
           {
-              NTP_UDP.stop();
-              Falla_Conexion = true;  
+              NTP_UDP.stop();  
               Inicializar_Calculo_Hora();           
           }
           if(Fecha_Hora_Actual.Reloj_UNIX)

@@ -250,6 +250,7 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
               Serial.println(F("Conexion MQTT fallida"));
               Serial.print("failed, rc="); 
               Serial.println(client_MQTT.state()); 
+              Falla_Conexion = true;
               Tick_Cliente_MQTT = TICKS_ESPERA_PARA_CONECTAR;
               Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
           }    
