@@ -601,7 +601,11 @@ void Enviar_Medicion(void)
               if(!Lista_Mediciones.Agregar_Dato_Lista(Data_Sensor[Num_Sensor].JSON_Serializado))
                   Serial.printf("NO SE PUDO GUARDAR DATOS\n");
               else
+              {
                   Serial.printf("Se guardo medicion en memoria Flash\n"); 
+                  sprintf(Data_Sensor[Num_Sensor].JSON_Serializado,"\0");
+              }
+
           }
           Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones = TICKS_MAX_SIN_PUBLICACIONES;
           if(!strcmp(Data_Sensor[Num_Sensor].Status,"onservice"))                             // Pasa de estado onservice a normal
