@@ -196,7 +196,7 @@ bool Lista::Agregar_Dato_Lista (char *dato)
   int i=0;
   do  
   {
-    sprintf(Copia_Dato->Nombre_Archivo,"/M%d",(unsigned char)random(CANTIDAD_MAXIMA_DATOS));
+    sprintf(Copia_Dato->Nombre_Archivo,"/M%d",(unsigned int)random(CANTIDAD_MAXIMA_DATOS));
   }while(SPIFFS.exists(Copia_Dato->Nombre_Archivo));
 
   Cantidad_Nodos_Lista++;

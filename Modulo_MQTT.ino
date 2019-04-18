@@ -240,6 +240,7 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
 
       if(!client_MQTT.connected())
       {
+          Serial.printf("MQTT No esta conectado\n");
           if(client_MQTT.connect(clientId_Char))//, Topic_LW, 1, true, LW_Msg, true))
           {
               Serial.println(F("Conexion MQTT exitosa"));
@@ -251,6 +252,7 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
               Serial.print("failed, rc="); 
               Serial.println(client_MQTT.state()); 
               Falla_Conexion = true;
+//              client_MQTT.disconnect();
               Tick_Cliente_MQTT = TICKS_ESPERA_PARA_CONECTAR;
               Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
           }    
