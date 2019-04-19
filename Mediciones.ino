@@ -225,7 +225,7 @@ void Inicializar_Mediciones(void)
       strcpy(Data_Sensor[Num_Sensor].Status,"normal");
       Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones = TICKS_MAX_SIN_PUBLICACIONES;  
   }
-  Serial.println("Mediciones Inicializada");
+  Serial.println(F("Mediciones Inicializada"));
   Thread_Mediciones.onRun(Maquina_Mediciones);
   Thread_Mediciones.setInterval(TIEMPO_TICKER_MEDICIONES);
   controll.add(&Thread_Mediciones);
@@ -276,7 +276,7 @@ Retorno_funcion  Rutina_Estado_IDLE_MEDICIONES(void)
 {
         if(!Data_Sensor[0].Numero_Sensor || Fecha_Hora_Actual.Ano == 0)
         {
-            Serial.printf("No se han configurado las mediciones aun, no mido\n");
+            Serial.println(F("No se han configurado las mediciones aun, no mido\n"));
             Tick_Mediciones = TICKS_ESPERA_INICIAL;
             Time_Out_Sin_Mediciones = TICKS_PERIODO_MEDICIONES;
             Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_IDLE_MEDICIONES;     
@@ -296,7 +296,7 @@ Retorno_funcion  Rutina_Estado_IDLE_MEDICIONES(void)
 Retorno_funcion  Rutina_Estado_MEDIR_ADC(void)
 {
 
-      Serial.println("Solicito medir");
+      Serial.println(F("Solicito medir"));
       AgregarDatoColaEnvioI2C(DIRECCION_LECTURA_ADC_MAX11603);
       AgregarDatoColaEnvioI2C(CANTIDAD_DE_CANALES_ADC_MAX11603);
 
@@ -528,31 +528,31 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
           if(Data_Sensor[Num_Sensor].Variacion_Medicion > Data_Sensor[Num_Sensor].Delta)      // 1 - Variacion mayor al Delta
           {
                 Alerta_Mediciones = true;
-                Serial.printf("Alerta de Medicion \n");
+                Serial.println(F("Alerta de Medicion \n"));
                 Enviar_Medicion();
           }
           else if(Data_Sensor[Num_Sensor].Lectura_Sensor > Data_Sensor[Num_Sensor].Highest)   // 2 - Medicion mayor a Highest
           {
                 Alerta_Mediciones = true;
-                Serial.printf("Alerta de Medicion \n");
+                Serial.println(F("Alerta de Medicion \n"));
                 Enviar_Medicion();
           }
           else if(Data_Sensor[Num_Sensor].Lectura_Sensor > Data_Sensor[Num_Sensor].High)      // 3 - Medicion mayor a High
           {
                 Alerta_Mediciones = true;
-                Serial.printf("Alerta de Medicion \n");
+                Serial.println(F("Alerta de Medicion \n"));
                 Enviar_Medicion();
           }
           else if(Data_Sensor[Num_Sensor].Lectura_Sensor < Data_Sensor[Num_Sensor].Low)       // 4 - Medicion menor a Low
           {
                 Alerta_Mediciones = true;
-                Serial.printf("Alerta de Medicion \n");
+                Serial.println(F("Alerta de Medicion \n"));
                 Enviar_Medicion();
           }
           else if(Data_Sensor[Num_Sensor].Lectura_Sensor < Data_Sensor[Num_Sensor].Lowest)    // 5 - Medicion menor a Lowest
           {
                 Alerta_Mediciones = true;
-                Serial.printf("Alerta de Medicion \n");
+                Serial.println(F("Alerta de Medicion \n"));
                 Enviar_Medicion();
           }
           else if(!strcmp(Data_Sensor[Num_Sensor].Status,"outofservice"))                     // 6 - Status igual a outofservice
@@ -599,10 +599,10 @@ void Enviar_Medicion(void)
           if(Falla_Conexion)
           { 
               if(!Lista_Mediciones.Agregar_Dato_Lista(Data_Sensor[Num_Sensor].JSON_Serializado))
-                  Serial.printf("NO SE PUDO GUARDAR DATOS\n");
+                  Serial.println(F("NO SE PUDO GUARDAR DATOS\n"));
               else
               {
-                  Serial.printf("Se guardo medicion en memoria Flash\n"); 
+                  Serial.println(F("Se guardo medicion en memoria Flash\n")); 
                   sprintf(Data_Sensor[Num_Sensor].JSON_Serializado,"\0");
               }
 
