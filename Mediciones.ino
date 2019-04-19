@@ -215,7 +215,7 @@ void Inicializar_Mediciones(void)
 {
 
 //  Wire.begin(MASTER_SDA,MASTER_SCL)             // Define los pines del bus I2C, primero SDA y segundo SCL
-  Lista_Mediciones.Reparar_Lista();
+//  Lista_Mediciones.Reparar_Lista();
   Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_IDLE_MEDICIONES;
   Tick_Mediciones = TICKS_ESPERA_INICIAL;
   Time_Out_Sin_Mediciones = TICKS_PERIODO_MEDICIONES;

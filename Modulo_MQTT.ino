@@ -134,6 +134,7 @@ char *LW_Msg = "Me desconecte";
 void Inicializar_Cliente_MQTT(void)
 {
 
+  Serial.printf("Tamano heap al inicio de carga certificados: %u\n", ESP.getFreeHeap());
     unsigned char char_private_key[1190];
     
     // Load private key file
@@ -184,6 +185,11 @@ void Inicializar_Cliente_MQTT(void)
         Serial.println(F("certificado de CA cargada"));
     else
        Serial.println(F("certificado de CA no cargada"));
+//Private_key.close();
+//Certificate.close();
+//CA.close();
+  Serial.printf("Tamano heap al final de carga certificados: %u\n", ESP.getFreeHeap());
+
 
 //    clientId += String(random(0xffff), HEX);
     clientId.toCharArray(clientId_Char,30);
@@ -241,10 +247,11 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
       if(!client_MQTT.connected())
       {
           Serial.printf("MQTT No esta conectado\n");
-          Serial.printf("client heap size: %u\n", ESP.getFreeHeap());
+          Serial.printf("Conexion MQTT heap size: %u\n", ESP.getFreeHeap());
           if(client_MQTT.connect(clientId_Char))//, Topic_LW, 1, true, LW_Msg, true))
           {
               Serial.println(F("Conexion MQTT exitosa"));
+              Falla_Conexion = false;
               Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
           }
           else
@@ -284,6 +291,7 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
   
       char Medicion_Data_Char[LARGO_BUFFER];
       char Topic_Data_Char[20]= TOPIC_DATA;
+      Serial.printf("Publicacion MQTT heap size: %u\n", ESP.getFreeHeap());
 
       for(int i=0; i<CANTIDAD_SENSORES; i++)
       {

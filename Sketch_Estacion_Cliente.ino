@@ -52,6 +52,7 @@ void setup() {
   Inicializar_EEPROM();
   Inicializar_Leds1();
   Inicializar_Mediciones();
+  Serial.printf("Tamano heap al inicio: %u\n", ESP.getFreeHeap());
  
 }
 
