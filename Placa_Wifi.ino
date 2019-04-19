@@ -163,8 +163,8 @@ void Conexion_WiFi(void)
 
                               WiFi.softAP(SSID_Config, Password_Config);
                               Direccion_IP = WiFi.softAPIP();
-                              Serial.printf("Access Point activado \n");
-                              Serial.print("IP del Access Point: ");
+                              Serial.println(F("Access Point activado \n"));
+                              Serial.print(F("IP del Access Point: "));
                               Serial.println(Direccion_IP);
                               Inicializar_DNS();
                                                             
@@ -180,7 +180,7 @@ void Conexion_WiFi(void)
                                   Serial.printf("Time out %d \n", time_out);       
                                   if (WiFi.softAPgetStationNum())
                                   { 
-                                        Serial.println("WebServer iniciado...");
+                                        Serial.println(F("WebServer iniciado..."));
                                         SSID_Server.on("/", WebSite_SSID_Conf); //esta es la pagina de configuracion          
                                         SSID_Server.on("/Configuracion_Guardada.html", Guardar_SSID); //Graba en la eeprom la configuracion
                                         SSID_Server.on("/Salir_de_Configuracion.html", Salir_de_Config); //Escanean las redes wifi disponibles
@@ -213,7 +213,7 @@ void Conexion_WiFi(void)
                              else
                              {
                                   if(WiFi.softAPdisconnect())
-                                      Serial.printf("Se elimino el Acces Point \n");
+                                      Serial.println(F("Se elimino el Acces Point \n"));
                                   SSID_Server.close();
                                   Estado_Wifi = CONECTAR_WIFI;
                                   tick_wifi = TICKS_ESPERA_DESCONECTADO;                             
@@ -227,14 +227,14 @@ void Conexion_WiFi(void)
                              aux = Leer_EEPROM(LONGITUD_SSID);
                              aux.toCharArray(Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR-1], LONGITUD_SSID); 
                              
-                             Serial.print("Conectando a \n");
+                             Serial.print(F("Conectando a \n"));
                              Serial.println(Tabla_SSID[numero_de_SSID]);
                              Serial.println();
                              WiFi.mode(WIFI_OFF);
                              WiFi.mode(WIFI_STA);
                              WiFi.macAddress(Mac_Address);
                              sprintf((char*)Mac_Address,"%02x:%02x:%02x:%02x:%02x:%02x",Mac_Address[0],Mac_Address[1],Mac_Address[2],Mac_Address[3],Mac_Address[4],Mac_Address[5]);
-                             Serial.printf("MAC ADDRESS: %s\n",Mac_Address);
+//                             Serial.printf("MAC ADDRESS: %s\n",Mac_Address);
                              WiFi.begin(Tabla_SSID[numero_de_SSID], Tabla_Password[numero_de_SSID]);
 
                              time_out = TICKS_CONECTANDO_TIMEOUT;
@@ -256,9 +256,9 @@ void Conexion_WiFi(void)
                                    else
                                    {
                                       Direccion_IP = WiFi.localIP();
-                                      Serial.println(" ");
-                                      Serial.println("WiFi conectado \n");
-                                      Serial.print("Direccion IP: ");
+                                      Serial.println("");
+                                      Serial.println(F("WiFi conectado \n"));
+                                      Serial.print(F("Direccion IP: "));
                                       Serial.println(Direccion_IP);
                                       Falla_Conexion = false;
 
@@ -301,7 +301,7 @@ void Conexion_WiFi(void)
               case DESCONECTAR_WIFI:
               
                             Serial.println("");
-                            Serial.println("Wifi se desconectó ");
+                            Serial.println(F("Wifi se desconectó "));
                             Serial.println("");
                             WiFi.disconnect();
                             Falla_Conexion = true;
@@ -410,10 +410,10 @@ void WebSite_SSID_Conf(void)
 {
     File Portal_Configuracion = SPIFFS.open("/Config-SSID.html", "r");
       if (!Portal_Configuracion) 
-        Serial.println("Portal_Configuracion no se pudo abrir ");
+        Serial.println(F("Portal_Configuracion no se pudo abrir "));
       else
-        Serial.println("Portal_Configuracion se abrio con exito ");
-    Serial.printf("Envio Pagina de Inicio \n");
+        Serial.println(F("Portal_Configuracion se abrio con exito "));
+    Serial.println(F("Envio Pagina de Inicio \n"));
     SSID_Server.send(200, "text/html", Portal_Configuracion.readString());
     Portal_Configuracion.close();
 //    Armar_Pagina();
@@ -429,7 +429,7 @@ void Guardar_SSID(void)
     Guardar_EEPROM(0,SSID_Server.arg("SSID"));
     Serial.println(SSID_Server.arg("Password"));
 //--> Usar otro metodo realizado por mi        
-    Guardar_EEPROM(LONGITUD_SSID,SSID_Server.arg("Password"));
+    Guardar_EEPROM(LONGITUD_SSID,SSID_Server.arg(F("Password")));
   
 //    mensaje = "Configuracion Guardada...";
     SSID_Server.send(200, "text/html",  Portal_Configuracion.readString());
@@ -443,7 +443,7 @@ void Guardar_SSID(void)
 void Salir_de_Config()
 {
 
-        File Portal_Configuracion = SPIFFS.open("/Salir_de_Configuracion.html", "r");
+        File Portal_Configuracion = SPIFFS.open(F("/Salir_de_Configuracion.html"), "r");
 //      Serial.printf("Envio Pagina de Inicio \n");
 //      mensaje = "Configuracion Finalizada...";
         SSID_Server.send(200, "text/html",  Portal_Configuracion.readString());

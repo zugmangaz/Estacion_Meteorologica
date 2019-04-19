@@ -241,6 +241,7 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
       if(!client_MQTT.connected())
       {
           Serial.printf("MQTT No esta conectado\n");
+          Serial.printf("client heap size: %u\n", ESP.getFreeHeap());
           if(client_MQTT.connect(clientId_Char))//, Topic_LW, 1, true, LW_Msg, true))
           {
               Serial.println(F("Conexion MQTT exitosa"));
