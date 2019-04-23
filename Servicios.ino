@@ -57,7 +57,7 @@
 #define TIEMPO_TICKER_SERVICIOS               1000     // 1000 milisegundos
 
 #define TIEMPO_ESPERAR_PARA_MEDIR_TIEMPO      5        //  (5 segundos)
-#define TIEMPO_TIME_OUT_PEDIR_HORA            180       //  (90 segundos)
+#define TIEMPO_TIME_OUT_PEDIR_HORA            90       //  (90 segundos)
 #define TIEMPO_INICIO_SERVICIOS               1        //  (1 segundo)
 
 
@@ -143,7 +143,7 @@ int Time_Out_Pedir_Hora;
 void Inicializar_Servicios(void)
 {
 
-  Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_PEDIR_CONFIGURACION_SENSORES;
+  Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
   Tick_Servicios = TICKS_INICIO_SERVICIOS;
   Inicializar_Calculo_Hora();
   Thread_Servicios.onRun(Servicios);
@@ -297,8 +297,8 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
               Fecha_Hora_Inicial=Fecha_Hora_Actual;
               Hora_Inicial_Establecida = true;
           }
-              sprintf(Fecha_Hora_Inicial.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Inicial.Ano, Fecha_Hora_Inicial.Mes, Fecha_Hora_Inicial.Dia, Fecha_Hora_Inicial.Hora, Fecha_Hora_Inicial.Minuto, Fecha_Hora_Inicial.Segundo);
-              Serial.printf("Fecha y Hora Inicial: %s\n",Fecha_Hora_Inicial.Char_Fecha_Hora_Actual);
+          sprintf(Fecha_Hora_Inicial.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Inicial.Ano, Fecha_Hora_Inicial.Mes, Fecha_Hora_Inicial.Dia, Fecha_Hora_Inicial.Hora, Fecha_Hora_Inicial.Minuto, Fecha_Hora_Inicial.Segundo);
+          Serial.printf("Fecha y Hora Inicial: %s\n",Fecha_Hora_Inicial.Char_Fecha_Hora_Actual);
           Time_Out_Pedir_Hora =  TIME_OUT_PEDIR_HORA;   
           Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
           
@@ -336,36 +336,39 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
 -   Variable para la obtencion de la configuracion   -
 ------------------------------------------------------*/
 
-HTTPClient http;    //Declare object of class HTTPClient
-char Servidor_Configuracion[LONGITUD_PATH_SERVIDOR_CONFIGURACION];
-String Respuesta_HTTP;
-int httpCode;
-     Sha256 hasher;
-     extern byte Mac_Address[LONGITUD_MAC_ADDRESS+1];
+    HTTPClient http;    //Declare object of class HTTPClient
+    char Servidor_Configuracion[LONGITUD_PATH_SERVIDOR_CONFIGURACION];
+    String Respuesta_HTTP;
+    int httpCode;
+    Sha256 hasher;
+    extern byte Mac_Address[LONGITUD_MAC_ADDRESS+1];
 
-     hasher.update(Mac_Address, sizeof(Mac_Address));
-     hasher.update((byte*)Fecha_Hora_Actual.Char_Fecha_Hora_Actual, sizeof((byte*)Fecha_Hora_Actual.Char_Fecha_Hora_Actual));
-     byte hash[SHA256_BLOCK_SIZE];
-     hasher.final(hash);
-     int pos=0;
-          
-     pos+=sprintf(Servidor_Configuracion+pos, "http://iot.expertaart.com.ar:8080/iot/raspy/getConfiguration/");
-     pos+=sprintf(Servidor_Configuracion+pos,"%s/",Mac_Address);
-     for(int i=0; i<SHA256_BLOCK_SIZE;i++)
-         pos+=sprintf(Servidor_Configuracion+pos,"%02x",hash[i]);
-     Serial.printf("Dir: %s \n",Servidor_Configuracion);
-      
-     http.begin(Servidor_Configuracion);
-     httpCode = http.GET();            //Enviar pedido
-     Serial.printf("HTTP Code: %d \n",httpCode); 
-//     Respuesta_HTTP = http.getString();    //Guardar la respuesta del servidor
-     httpCode = 200;  // ************** Eliminar junto con la linea de abajo
-     Respuesta_HTTP = String(F("[{\"nroSensor\": 1,\"serial\": \"aa:bb:cc:dd:ee:ff-1\",\"readTime\":\"01/01/19 00:00:00\",\"metric\":\"C\",\"value\": 25.2,\"lowest\": 20,\"low\": 25,\"high\": 30,\"highest\": 50,\"delta\": 5,\"status\": \"normal\"}, {\"nroSensor\": 2,\"serial\": \"aa:bb:cc:dd:ee:ff-2\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"%\",\"value\": 25.2,\"lowest\": 5,\"low\": 15,\"high\": 70,\"highest\": 80,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 3,\"serial\": \"aa:bb:cc:dd:ee:ff-3\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"Lux\",\"value\": 25.2,\"lowest\": 5,\"low\": 5,\"high\": 1000,\"highest\": 10000,\"delta\": 100,\"status\": \"normal\"},{\"nroSensor\": 4,\"serial\": \"aa:bb:cc:dd:ee:ff-4\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"dBR\",\"value\":-25,\"lowest\": -40,\"low\": -20,\"high\": -5,\"highest\": -3,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 5,\"serial\": \"aa:bb:cc:dd:ee:ff-5\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"PPM\",\"value\": 25.2,\"lowest\": 10,\"low\": 25,\"high\": 80,\"highest\": 100,\"delta\": 10,\"status\": \"normal\"}]"));
-
-     Serial.print(F("Codigo respuesta del servidor:")); //200 is OK
-     Serial.println(httpCode);   //Print HTTP return code
-     Serial.print(F("Respuesta del Get_Configuration:"));
-     Serial.println(Respuesta_HTTP);    //Print request response payload
+    Serial.printf("Tamano heap antes de solicitar configuraciones: %u\n", ESP.getFreeHeap());
+    Serial.printf("MAC ADDRESS_HoRA_ACTUAL: %s%s\n",Mac_Address,Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
+    
+    hasher.update(Mac_Address, strlen((const char *)Mac_Address));
+    hasher.update((byte*)Fecha_Hora_Actual.Char_Fecha_Hora_Actual, strlen(Fecha_Hora_Actual.Char_Fecha_Hora_Actual));
+    byte hash[SHA256_BLOCK_SIZE];
+    hasher.final(hash);
+    int pos=0;
+        
+    pos+=sprintf(Servidor_Configuracion+pos, "http://iotdev.expertaart.com.ar:8080/iot/raspy/getConfiguration/");
+    pos+=sprintf(Servidor_Configuracion+pos,"%s/",Mac_Address);
+    for(int i=0; i<SHA256_BLOCK_SIZE;i++)
+       pos+=sprintf(Servidor_Configuracion+pos,"%02x",hash[i]);
+    Serial.printf("Dir: %s \n",Servidor_Configuracion);
+    
+    http.begin(Servidor_Configuracion);
+    httpCode = http.GET();            //Enviar pedido
+    Serial.printf("HTTP Code: %d \n",httpCode); 
+//    Respuesta_HTTP = http.getString();    //Guardar la respuesta del servidor
+    httpCode = 200;  // ************** Eliminar junto con la linea de abajo
+    Respuesta_HTTP = String(F("[{\"nroSensor\": 1,\"serial\": \"aa:bb:cc:dd:ee:ff-1\",\"readTime\":\"01/01/19 00:00:00\",\"metric\":\"C\",\"value\": 25.2,\"lowest\": 20,\"low\": 25,\"high\": 30,\"highest\": 50,\"delta\": 5,\"status\": \"normal\"}, {\"nroSensor\": 2,\"serial\": \"aa:bb:cc:dd:ee:ff-2\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"%\",\"value\": 25.2,\"lowest\": 5,\"low\": 15,\"high\": 70,\"highest\": 80,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 3,\"serial\": \"aa:bb:cc:dd:ee:ff-3\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"Lux\",\"value\": 25.2,\"lowest\": 5,\"low\": 5,\"high\": 1000,\"highest\": 10000,\"delta\": 100,\"status\": \"normal\"},{\"nroSensor\": 4,\"serial\": \"aa:bb:cc:dd:ee:ff-4\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"dBR\",\"value\":-25,\"lowest\": -40,\"low\": -20,\"high\": -5,\"highest\": -3,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 5,\"serial\": \"aa:bb:cc:dd:ee:ff-5\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"PPM\",\"value\": 25.2,\"lowest\": 10,\"low\": 25,\"high\": 80,\"highest\": 100,\"delta\": 10,\"status\": \"normal\"}]"));
+    
+    Serial.print(F("Codigo respuesta del servidor:")); //200 is OK
+    Serial.println(httpCode);   //Print HTTP return code
+    Serial.print(F("Respuesta del Get_Configuration:"));
+    Serial.println(Respuesta_HTTP);    //Print request response payload
 
     const char *String_JSON_Buffer;
     
@@ -373,7 +376,7 @@ int httpCode;
     {
           // Use arduinojson.org/assistant to compute the capacity.
           const size_t capacity = JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 720;
-          DynamicJsonDocument Configuracion_Sensores(capacity);
+          StaticJsonDocument<capacity> Configuracion_Sensores;
           // Deserialize JSON object
           DeserializationError error = deserializeJson(Configuracion_Sensores, Respuesta_HTTP);
           
@@ -387,7 +390,7 @@ int httpCode;
           { 
               const JsonObject& root = Configuracion_Sensores[Num_Sensor];
               Data_Sensor[Num_Sensor].Numero_Sensor = root["nroSensor"];
-              String_JSON_Buffer                    =root["metric"];
+              String_JSON_Buffer                    = root["metric"];
               sprintf(Data_Sensor[Num_Sensor].Unidad,"%s",String_JSON_Buffer);
               Data_Sensor[Num_Sensor].Lowest        = root["lowest"];
               Data_Sensor[Num_Sensor].Low           = root["low"];
@@ -408,16 +411,16 @@ int httpCode;
           Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
           Configuracion_Sensores.clear();
 
-     }
-     else
-     {
+    }
+    else
+    {
           Serial.println(F("El servicio de configuraciones no respondio adecuadamente"));
           Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_PEDIR_CONFIGURACION_SENSORES;
-     }
-     
-     http.end();  //Cerrar conexion
-//     Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_OBTENER_CONFIGURACION_SENSORES;
-     return Puntero_Proximo_Estado_Servicios;
+    }
+    
+    http.end();  //Cerrar conexion
+    //     Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_OBTENER_CONFIGURACION_SENSORES;
+    return Puntero_Proximo_Estado_Servicios;
 
 }
 

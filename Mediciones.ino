@@ -65,20 +65,20 @@
 
 #define TIEMPO_ESPERA_INICIAL         15000
 #define TIEMPO_PERIODO_MEDICIONES     30000   //  (30000 milisegundos)  
-#define TIEMPO_MEDIR_ADC              50       //  (1 milisegundo)
-#define TIEMPO_LECTURA_ADC            50       //  (1 milisegundo)
-#define TIEMPO_MEDIR_TEMP_HUMEDAD     50       //  (1 milisegundo)
-#define TIEMPO_LECTURA_TEMP_HUMEDAD   50       //  (1 milisegundo)
-#define TIEMPO_ESPERA_PARA_MEDIR_LUZ  50       //  (1 milisegundo)
-#define TIEMPO_HABILITAR_LUZ          50       //  (1 milisegundo)
-#define TIEMPO_MEDIR_LUZ              50       //  (1 milisegundo)
-#define TIEMPO_AJUSTE_LUZ             50       //  (1 milisegundo)
-#define TIEMPO_GUARDADO_MEDICION_LUZ  50       //  (1 milisegundo)
-#define TIEMPO_EVALUAR_PUBLICACION    50       //  (1 milisegundo)
+#define TIEMPO_MEDIR_ADC              100       //  (1 milisegundo)
+#define TIEMPO_LECTURA_ADC            100       //  (1 milisegundo)
+#define TIEMPO_MEDIR_TEMP_HUMEDAD     100       //  (1 milisegundo)
+#define TIEMPO_LECTURA_TEMP_HUMEDAD   100       //  (1 milisegundo)
+#define TIEMPO_ESPERA_PARA_MEDIR_LUZ  100       //  (1 milisegundo)
+#define TIEMPO_HABILITAR_LUZ          100       //  (1 milisegundo)
+#define TIEMPO_MEDIR_LUZ              100       //  (1 milisegundo)
+#define TIEMPO_AJUSTE_LUZ             100       //  (1 milisegundo)
+#define TIEMPO_GUARDADO_MEDICION_LUZ  100       //  (1 milisegundo)
+#define TIEMPO_EVALUAR_PUBLICACION    100       //  (1 milisegundo)
 #define TIEMPO_MAX_SIN_PUBLICACIONES  600000    // (600 segundos)
 
 
-#define TIEMPO_TICKER_MEDICIONES  50             // 13 milisegundos
+#define TIEMPO_TICKER_MEDICIONES  100             // 13 milisegundos
 
 
 /*--------------------------------------
@@ -215,7 +215,7 @@ void Inicializar_Mediciones(void)
 {
 
 //  Wire.begin(MASTER_SDA,MASTER_SCL)             // Define los pines del bus I2C, primero SDA y segundo SCL
-//  Lista_Mediciones.Reparar_Lista();
+  Lista_Mediciones.Reparar_Lista();
   Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_IDLE_MEDICIONES;
   Tick_Mediciones = TICKS_ESPERA_INICIAL;
   Time_Out_Sin_Mediciones = TICKS_PERIODO_MEDICIONES;
@@ -369,9 +369,9 @@ Retorno_funcion  Rutina_Estado_LEER_MEDICION_HUMEDAD(void)
 //              PPM = 121.4517 * (Corrected_Rs / Ro(20000))^-2.78054
 
   MQ135_Rs = ((float)ADC_FULL_SCALE/(float)Gas1 - 1)* MQ135_R_L;
-  Serial.printf("Rs = %8.2f \n",MQ135_Rs);
+//  Serial.printf("Rs = %8.2f \n",MQ135_Rs);
   MQ135_Corrected_Rs = MQ135_Rs/(1.6979 - 0.012 * PPM_Temp - 0.00612 * PPM_Humedad);
-  Serial.printf("Corrected_Rs = %8.2f \n",MQ135_Corrected_Rs);
+//  Serial.printf("Corrected_Rs = %8.2f \n",MQ135_Corrected_Rs);
   PPM_Gas1 = MQ135_Scaling_Factor * pow((float)MQ135_Corrected_Rs / MQ135_R_O, MQ135_Exponential_Factor);
   
 /*

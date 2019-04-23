@@ -76,9 +76,9 @@ Thread Thread_MQTT =  Thread();
 int Tick_Cliente_MQTT;
 
 
-//WiFiClient espClient;
 WiFiClientSecure espClient;
 PubSubClient client_MQTT(espClient);
+//espClient = WiFiClientSecure();
 
 
 
@@ -246,8 +246,10 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
 
       if(!client_MQTT.connected())
       {
-          Serial.printf("MQTT No esta conectado\n");
-          Serial.printf("Conexion MQTT heap size: %u\n", ESP.getFreeHeap());
+//          Serial.printf("MQTT No esta conectado\n");
+//          Serial.printf("Conexion MQTT heap size: %u\n", ESP.getFreeHeap());
+          if(Falla_Conexion)
+              ESP.reset();
           if(client_MQTT.connect(clientId_Char))//, Topic_LW, 1, true, LW_Msg, true))
           {
               Serial.println(F("Conexion MQTT exitosa"));
@@ -301,13 +303,13 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
                       Serial.printf("El JSON se envio satisfatoriamente\n"); 
                   else
                       Serial.printf("Fallo el envio del JSON\n");
-*/                  Serial.printf("JSON Enviado desde RAM: %s\n",Data_Sensor[i].JSON_Serializado);
-                  sprintf(Data_Sensor[i].JSON_Serializado,"\0");
+                  Serial.printf("JSON Enviado desde RAM: %s\n",Data_Sensor[i].JSON_Serializado);
+*/                  sprintf(Data_Sensor[i].JSON_Serializado,"\0");
              }
-             else
-                  Serial.printf("No hay mediciones en RAM para enviar del sensor %d\n",i);
+//             else
+//                  Serial.printf("No hay mediciones en RAM para enviar del sensor %d\n",i);
       }
-      Serial.printf("Mediciones Guardadas en memoria Flash: %d\n",Lista_Mediciones.Cantidad_Nodos());
+//      Serial.printf("Mediciones Guardadas en memoria Flash: %d\n",Lista_Mediciones.Cantidad_Nodos());
         
       if(Lista_Mediciones.Cantidad_Nodos())
       {  
