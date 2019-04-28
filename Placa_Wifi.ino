@@ -19,7 +19,7 @@
  */
 
 #include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
+//#include <ESP8266mDNS.h>
 //#include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <Thread.h>
@@ -94,9 +94,9 @@
 
 Thread Thread_WIFI = Thread();
 
-IPAddress Direccion_IP;
+//IPAddress Direccion_IP;
 
-WiFiClient Cliente_SSID;
+//WiFiClient Cliente_SSID;
 ESP8266WebServer  SSID_Server(80);
 
 char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = {"TP-LINK_493C42"   , "TP-Link_Extender"} ;
@@ -162,11 +162,11 @@ void Conexion_WiFi(void)
               case ACTIVAR_SOFT_AP:
 
                               WiFi.softAP(SSID_Config, Password_Config);
-                              Direccion_IP = WiFi.softAPIP();
-                              Serial.println(F("Access Point activado \n"));
-                              Serial.print(F("IP del Access Point: "));
-                              Serial.println(Direccion_IP);
-                              Inicializar_DNS();
+//                              Direccion_IP = WiFi.softAPIP();
+//                              Serial.println(F("Access Point activado \n"));
+//                              Serial.print(F("IP del Access Point: "));
+//                              Serial.println(Direccion_IP);
+//                              Inicializar_DNS();
                                                             
                               time_out = TICKS_CONEXION_SOFT_AP_TIMEOUT;
                               tick_wifi = TICKS_CONEXION_SOFT_AP;
@@ -255,11 +255,11 @@ void Conexion_WiFi(void)
                                    }
                                    else
                                    {
-                                      Direccion_IP = WiFi.localIP();
+//                                      Direccion_IP = WiFi.localIP();
                                       Serial.println("");
                                       Serial.println(F("WiFi conectado \n"));
-                                      Serial.print(F("Direccion IP: "));
-                                      Serial.println(Direccion_IP);
+//                                      Serial.print(F("Direccion IP: "));
+//                                      Serial.println(Direccion_IP);
                                       Falla_Conexion = false;
 
                                       Inicializar_Cliente_MQTT();
@@ -357,7 +357,7 @@ void Inicializar_Wifi(void)
   - Nivel de STACK:                                    -
   -                                             -
   ---------------------------------------------------------------------------------------------- */
-
+/*
 void Inicializar_DNS(void)
 {
     // Set up mDNS responder:
@@ -380,7 +380,7 @@ void Inicializar_DNS(void)
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------
   -                                             -
   - FunciÃ³n:    void Inicializar_SSID_Server(void);                        -

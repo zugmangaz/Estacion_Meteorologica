@@ -44,7 +44,7 @@
 #define LONGITUD_PATH_SERVIDOR_CONFIGURACION 150 // Longitud del Path para obtener la configuracion de los sensores
 #define LONGITUD_MAC_ADDRESS    17
 
-#define MIEMBROS_JSON_CONFIGURACION_SENSORES 11
+#define MIEMBROS_JSON_CONFIGURACION_SENSORES 8
 
 #define NUMERO_INTENTOS_CONEXION_NTP 5
 
@@ -81,12 +81,12 @@ Retorno_funcion   Rutina_Estado_LEER_HORA(void);
 Retorno_funcion   Rutina_Estado_CALCULAR_HORA(void);
 
 Retorno_funcion   Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void);
-Retorno_funcion   Rutina_Estado_OBTENER_CONFIGURACION_SENSORES(void);
+//Retorno_funcion   Rutina_Estado_OBTENER_CONFIGURACION_SENSORES(void);
 
 Retorno_funcion Puntero_Proximo_Estado_Servicios;
 
 
-void Inicializar_Get_Configuration(void);
+//void Inicializar_Get_Configuration(void);
 void Servicios(void);
 
 /*--------------------------------            
@@ -114,7 +114,7 @@ unsigned char Intentos_conexion_NTP;
 extern bool Falla_Conexion;
 
 bool Hora_Inicial_Establecida=false;
-struct Tiempo Fecha_Hora_Inicial;
+//struct Tiempo Fecha_Hora_Inicial;
 struct Tiempo Fecha_Hora_Actual;
 int Time_Out_Pedir_Hora;
 /*---------------------------------------            
@@ -200,13 +200,13 @@ void Inicializar_Calculo_Hora(void)
   -                                             -
   ---------------------------------------------------------------------------------------------- */
 
-void Inicializar_Get_Configuration(void)
+/*void Inicializar_Get_Configuration(void)
 {
           
 
 
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------
   -                                             -
   - FunciÃ³n:    void Calculo_Hora(void);                        -
@@ -290,7 +290,7 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
           Fecha_Hora_Actual.Reloj_UNIX = Segundos_Desde_1900 - Segundo_en_Setenta_Anos + UTC * 3600; // Restamos los 70 años:
           Fecha_Hora_Actual.Millis_Ultimo_Sinc = millis();
 
-          if(!Hora_Inicial_Establecida)
+/*          if(!Hora_Inicial_Establecida)
           {
  //             Fecha_Hora_Inicial.Reloj_UNIX = Segundos_Desde_1900 - Segundo_en_Setenta_Anos + UTC * 3600; // Restamos los 70 años:
               Calcular_Fecha_Hora(Fecha_Hora_Actual.Reloj_UNIX);
@@ -299,7 +299,7 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
           }
           sprintf(Fecha_Hora_Inicial.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Inicial.Ano, Fecha_Hora_Inicial.Mes, Fecha_Hora_Inicial.Dia, Fecha_Hora_Inicial.Hora, Fecha_Hora_Inicial.Minuto, Fecha_Hora_Inicial.Segundo);
           Serial.printf("Fecha y Hora Inicial: %s\n",Fecha_Hora_Inicial.Char_Fecha_Hora_Actual);
-          Time_Out_Pedir_Hora =  TIME_OUT_PEDIR_HORA;   
+*/          Time_Out_Pedir_Hora =  TIME_OUT_PEDIR_HORA;   
           Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
           
       } 
@@ -339,15 +339,16 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
     HTTPClient http;    //Declare object of class HTTPClient
     char Servidor_Configuracion[LONGITUD_PATH_SERVIDOR_CONFIGURACION];
     String Respuesta_HTTP;
+    char Fecha[9];
     int httpCode;
     Sha256 hasher;
     extern byte Mac_Address[LONGITUD_MAC_ADDRESS+1];
 
     Serial.printf("Tamano heap antes de solicitar configuraciones: %u\n", ESP.getFreeHeap());
     Serial.printf("MAC ADDRESS_HoRA_ACTUAL: %s%s\n",Mac_Address,Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
-    
+    sprintf(Fecha,"%02d-%02d-%04d-",Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Ano);
+    hasher.update((byte*)Fecha, strlen(Fecha));
     hasher.update(Mac_Address, strlen((const char *)Mac_Address));
-    hasher.update((byte*)Fecha_Hora_Actual.Char_Fecha_Hora_Actual, strlen(Fecha_Hora_Actual.Char_Fecha_Hora_Actual));
     byte hash[SHA256_BLOCK_SIZE];
     hasher.final(hash);
     int pos=0;
@@ -375,7 +376,8 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
     if(httpCode == 200)
     {
           // Use arduinojson.org/assistant to compute the capacity.
-          const size_t capacity = JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 720;
+//          const size_t capacity = JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 720;
+          const size_t capacity = JSON_OBJECT_SIZE(4) + JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 353;
           StaticJsonDocument<capacity> Configuracion_Sensores;
           // Deserialize JSON object
           DeserializationError error = deserializeJson(Configuracion_Sensores, Respuesta_HTTP);
@@ -386,17 +388,19 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
               Serial.println(error.c_str()); 
           }
               
+          const JsonObject& Objeto_Configuracion_Sensores = Configuracion_Sensores["sensors"];
+ 
           for(Num_Sensor = 0 ; Num_Sensor <CANTIDAD_DE_SENSORES ; Num_Sensor++)
           { 
-              const JsonObject& root = Configuracion_Sensores[Num_Sensor];
-              Data_Sensor[Num_Sensor].Numero_Sensor = root["nroSensor"];
-              String_JSON_Buffer                    = root["metric"];
+              while(Objeto_Configuracion_Sensores[Num_Sensor]["nroSensor"]
+              Data_Sensor[Num_Sensor].Numero_Sensor = Objeto_Configuracion_Sensores[Num_Sensor]["nroSensor"];
+              String_JSON_Buffer                    = Objeto_Configuracion_Sensores[Num_Sensor]["metric"];
               sprintf(Data_Sensor[Num_Sensor].Unidad,"%s",String_JSON_Buffer);
-              Data_Sensor[Num_Sensor].Lowest        = root["lowest"];
-              Data_Sensor[Num_Sensor].Low           = root["low"];
-              Data_Sensor[Num_Sensor].High          = root["high"];
-              Data_Sensor[Num_Sensor].Highest       = root["highest"];
-              Data_Sensor[Num_Sensor].Delta         = root["delta"];
+              Data_Sensor[Num_Sensor].Lowest        = Objeto_Configuracion_Sensores[Num_Sensor]["lowest"];
+              Data_Sensor[Num_Sensor].Low           = Objeto_Configuracion_Sensores[Num_Sensor]["low"];
+              Data_Sensor[Num_Sensor].High          = Objeto_Configuracion_Sensores[Num_Sensor]["high"];
+              Data_Sensor[Num_Sensor].Highest       = Objeto_Configuracion_Sensores[Num_Sensor]["highest"];
+              Data_Sensor[Num_Sensor].Delta         = Objeto_Configuracion_Sensores[Num_Sensor]["delta"];
 /*              Serial.println(F("Respuesta:"));
               Serial.printf("Sensor:  %d, Sensor   %d \n",          Num_Sensor, Data_Sensor[Num_Sensor].Numero_Sensor);
               Serial.printf("Sensor:  %d, Unidad   %s \n",           Num_Sensor, Data_Sensor[Num_Sensor].Unidad);
@@ -425,6 +429,7 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
 }
 
 //------------------------   5   ------------------------------
+/*
 Retorno_funcion  Rutina_Estado_OBTENER_CONFIGURACION_SENSORES(void)
 {
 
@@ -432,7 +437,7 @@ Retorno_funcion  Rutina_Estado_OBTENER_CONFIGURACION_SENSORES(void)
      return Puntero_Proximo_Estado_Servicios;
 
 }
-
+*/
 void Calcular_Fecha_Hora(unsigned long Tiempo_Epoch)
 {
     Fecha_Hora_Actual.Hora    = ((Tiempo_Epoch % 86400L) / 3600);

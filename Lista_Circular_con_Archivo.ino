@@ -36,13 +36,19 @@
 
 #define LARGO_BUFFER            348
 #define CANTIDAD_MAXIMA_DATOS   1000
-struct Nodo
+
+#define POSICION_SEEK_ARCHIVO_ANTERIOR    0     
+#define POSICION_SEEK_ARCHIVO_SIGUIENTE   6  
+#define POSICION_SEEK_JSON                12
+
+#define LARGO_NOMBRE_NODOS                6
+typedef struct
 {
-          struct Nodo *Nodo_Frontal;
-          struct Nodo *Nodo_Trasero;
-          char Nombre_Archivo[6];
+          char Nombre_Archivo_Nodo_Frontal[LARGO_NOMBRE_NODOS];
+          char Nombre_Archivo_Nodo_Trasero[LARGO_NOMBRE_NODOS];
+          char JSON_Medicion[LARGO_BUFFER];
           //File  *Contenido;
-};
+}Nodo_Lista;
 
 
 class Lista
@@ -58,8 +64,8 @@ class Lista
 //              unsigned char   Largo_Lista;      // Largo de la lista      
 //              class Nodo     * lista[];          // Comienzo de la lista en la que se Almacenan los Datos
               unsigned char  Cantidad_Nodos_Lista;    // Contador de Nodos Almacenados en la Lista
-              struct Nodo   *  Entrada_Lista;  // Puntero para la Entrada de Datos a la Lista
-              struct Nodo   *  Salida_Lista;   // Puntero para la Salida de Datos de la Lista
+              char Nombre_Archivo_Entrada_Lista[LARGO_NOMBRE_NODOS];  // Puntero para la Entrada de Datos a la Lista
+              char Nombre_Archivo_Salida_Lista[LARGO_NOMBRE_NODOS];   // Puntero para la Salida de Datos de la Lista
 };
 
 
@@ -87,8 +93,8 @@ Lista::Lista()
 {
 //  lista = new unsigned char;
   Cantidad_Nodos_Lista = 0;
-  Entrada_Lista = Salida_Lista;
-  Salida_Lista = Entrada_Lista;
+  strcpy(Nombre_Archivo_Entrada_Lista, Nombre_Archivo_Salida_Lista);
+  strcpy(Nombre_Archivo_Salida_Lista, Nombre_Archivo_Entrada_Lista);
 }
 
 /* ----------------------------------------------------------------------------------------------
@@ -166,48 +172,75 @@ unsigned char Lista::Cantidad_Nodos (void)
 
 bool Lista::Agregar_Dato_Lista (char *dato)
 {
-  struct Nodo *Copia_Dato;
-  size_t largo;
-  Copia_Dato = new struct Nodo;
+//  Nodo_Lista *P_Nodo_Entrada;
+//  Nodo_Lista Nodo_Entrada, Nodo_Nuevo;
+  char Nombre_Archivo_Nuevo[LARGO_NOMBRE_NODOS];
+//  char Nombre_Archivo_Nodo_Frontal[LARGO_NOMBRE_NODOS];
+//  char Nombre_Archivo_Nodo_Trasero[LARGO_NOMBRE_NODOS];
+//  char JSON_Medicion[LARGO_BUFFER];
   
-  if(!Copia_Dato)
+  do  
   {
-      // Serial.printf("no hay mas lugar en la memoria");
+      sprintf(Nombre_Archivo_Nuevo,"/M%003d",(unsigned int)random(CANTIDAD_MAXIMA_DATOS));
+  }while(SPIFFS.exists(Nombre_Archivo_Nuevo));
+
+  File Archivo_Medicion = SPIFFS.open(Nombre_Archivo_Nuevo,"a+");
+  if(!Archivo_Medicion)
+  {
+      Serial.printf("No se pudo crear el archivo\n");
       return false;
   }
 
   if(Cantidad_Nodos_Lista == 0)
   {
-        Entrada_Lista = Copia_Dato;
-        Salida_Lista  = Copia_Dato;
-        Copia_Dato->Nodo_Frontal = Copia_Dato;
-        Copia_Dato->Nodo_Trasero = Copia_Dato;
+        strcpy( Nombre_Archivo_Entrada_Lista,  Nombre_Archivo_Nuevo);
+        strcpy( Nombre_Archivo_Salida_Lista,  Nombre_Archivo_Nuevo);
+//        strcpy(Nombre_Archivo_Nodo_Frontal, Nombre_Archivo_Nuevo);
+//        strcpy(Nombre_Archivo_Nodo_Trasero, Nombre_Archivo_Nuevo);
+
+//        strcpy(Nodo_Aux.JSON_Medicion, dato);
+
+        Archivo_Medicion.println(Nombre_Archivo_Nuevo);         // Guardo el nombre del archivo del nodo anterior
+        Archivo_Medicion.println(Nombre_Archivo_Nuevo);         // Guardo el nombre del archivo del nodo siguiente
+        Archivo_Medicion.println(dato);                         // Guardo el JSON de la medicion
+
+        Archivo_Medicion.close();
   }
   else
   {
-        Copia_Dato->Nodo_Trasero = Entrada_Lista->Nodo_Trasero;
+        File Archivo_Entrada_Lista  = SPIFFS.open(Nombre_Archivo_Entrada_Lista,"a+");
+        File Archivo_Salida_Lista   = SPIFFS.open(Nombre_Archivo_Salida_Lista,"a+");
+        File Archivo_Medicion       = SPIFFS.open(Nombre_Archivo_Nuevo,"a+");
+        if(!Archivo_Medicion)
+            Serial.printf("No se pudo crear el archivo\n");
+
+// Guardo en el nodo nuevo
+        Archivo_Medicion.println(Nombre_Archivo_Salida_Lista);  // Guardo el nombre del archivo del nodo anterior
+        Archivo_Medicion.println(Nombre_Archivo_Entrada_Lista); // Guardo el nombre del archivo del nodo siguiente
+        Archivo_Medicion.println(dato);                         // Guardo el JSON de la medicion
+
+
+        Archivo_Entrada_Lista.println(Nombre_Archivo_Nuevo);    // Guardo el nodo nuevo en el siguiente nodo
+        Archivo_Salida_Lista.seek(POSICION_SEEK_ARCHIVO_SIGUIENTE);
+        Archivo_Salida_Lista.println(Nombre_Archivo_Nuevo);     // Guardo el nodo nuevo en el nodo anterior
+        
+        
+/*        Copia_Dato->Nodo_Trasero = Entrada_Lista->Nodo_Trasero;   Archivo_Medicion.println(Nombre_Archivo_Nodo_Trasero);
         Entrada_Lista->Nodo_Trasero = Copia_Dato;
 
         Salida_Lista->Nodo_Frontal = Copia_Dato;        
-        Copia_Dato->Nodo_Frontal = Entrada_Lista;
+        Copia_Dato->Nodo_Frontal = Entrada_Lista;                 Archivo_Medicion.println(Nombre_Archivo_Entrada_Lista);
 
         Entrada_Lista = Copia_Dato;
+*/
   }
-  int i=0;
-  do  
-  {
-    sprintf(Copia_Dato->Nombre_Archivo,"/M%d",(unsigned int)random(CANTIDAD_MAXIMA_DATOS));
-  }while(SPIFFS.exists(Copia_Dato->Nombre_Archivo));
 
   Cantidad_Nodos_Lista++;
-  File Archivo_Medicion = SPIFFS.open(Copia_Dato->Nombre_Archivo,"a+");
+/*  File Archivo_Medicion = SPIFFS.open(Copia_Dato->Nombre_Archivo,"a+");
   if(!Archivo_Medicion)
       Serial.printf("No se pudo crear el archivo\n");
 //  largo = strlen(dato);
-  Archivo_Medicion.print(dato);
-  Archivo_Medicion.close();
-//  Copia_Dato->Contenido = new char[largo];
-//  strcpy(Copia_Dato->Contenido, dato);
+*/
   return true;
 }
 
@@ -235,30 +268,44 @@ bool Lista::Agregar_Dato_Lista (char *dato)
 bool Lista::Retirar_Dato_Lista (char *dato)
 {
   struct Nodo *Aux;
+  char Nombre_Archivo_Nodo_Aux[LARGO_NOMBRE_NODOS];
+  char Nombre_Archivo_Nodo_Trasero[LARGO_NOMBRE_NODOS];
   
   if (Cantidad_Nodos_Lista == 0)
     return false;
 
+  File Archivo_Salida_Lista   = SPIFFS.open(Nombre_Archivo_Salida_Lista,"a+");
 
-  File Archivo_Medicion = SPIFFS.open(Salida_Lista->Nombre_Archivo,"r");
-  int j;
-  for(j=0; j<Archivo_Medicion.size();j++)
-        dato[j] = (char)Archivo_Medicion.read();
-  dato[j] = '\0';
-//  String s = Archivo_Medicion.readStringUntil('\0');
-//  s.toCharArray(dato,LARGO_BUFFER);
-  SPIFFS.remove(Salida_Lista->Nombre_Archivo);
-//  strcpy(dato, Salida_Lista->Contenido);
-  Cantidad_Nodos_Lista --;
-
-  Aux = Salida_Lista->Nodo_Trasero;
-  Entrada_Lista->Nodo_Trasero = Salida_Lista->Nodo_Trasero;
-  Aux->Nodo_Frontal = Entrada_Lista;
+  int n;
+//      Leo el nombre del archivo del ante ultimo nodo        
+  for(n=0; Nombre_Archivo_Nodo_Aux[n-1] != '\n';n++)
+      Nombre_Archivo_Nodo_Aux[n] = (char)Archivo_Salida_Lista.read();
+  Nombre_Archivo_Nodo_Aux[n-1] = '\0';
+ 
+  File Archivo_Nueva_Salida       = SPIFFS.open(Nombre_Archivo_Nodo_Aux,"a+");  // Abro ante ultimo nodo
+  Archivo_Nueva_Salida.seek(POSICION_SEEK_ARCHIVO_SIGUIENTE);    
+  Archivo_Nueva_Salida.println(Nombre_Archivo_Entrada_Lista);    // Apunto al primer nodo de la lista
+  Archivo_Nueva_Salida.close();
   
-  Aux = Salida_Lista;
-  Salida_Lista = Salida_Lista->Nodo_Trasero;
+  File Archivo_Entrada_Lista  = SPIFFS.open( Nombre_Archivo_Entrada_Lista,"a+");
 
-  delete Aux;
+  Archivo_Entrada_Lista.println(Nombre_Archivo_Nodo_Aux);       // Apunto a la nueva salida 
+  Archivo_Entrada_Lista.close();
+ 
+  Archivo_Salida_Lista.seek(POSICION_SEEK_JSON);    
+
+// Leo del dato del archivo
+  for(n=0; dato[n-1] != '\n';n++)
+      dato[n] = (char)Archivo_Salida_Lista.read();
+  dato[n-1] = '\0';
+
+
+  Archivo_Salida_Lista.close();                 // Cierro el archivo que retiro de la lista
+  SPIFFS.remove( Nombre_Archivo_Salida_Lista);   // Remuevo el nodo de la lista
+  
+  strcpy(Nombre_Archivo_Salida_Lista, Nombre_Archivo_Nodo_Aux);    // Guardo nueva salida
+
+  Cantidad_Nodos_Lista --;
 
   return true;
 }
@@ -289,39 +336,34 @@ bool Lista::Retirar_Dato_Lista (char *dato)
 
 bool Lista::Reparar_Lista (void)
 {
-  struct Nodo *Copia_Dato;
-  char Nombre_Archivo_Perdido[6];
+//  struct Nodo *Copia_Dato;
+  char Nombre_Archivo_Perdido[LARGO_NOMBRE_NODOS];
   
+
   for(int i=0; i<CANTIDAD_MAXIMA_DATOS;i++)
   {
-
-          sprintf(Nombre_Archivo_Perdido,"/M%d",i);
+        sprintf(Nombre_Archivo_Perdido,"/M%003d",i);
         if(SPIFFS.exists(Nombre_Archivo_Perdido))
         {
-              Serial.printf("Recupero Nodo /M%d\n",i);
-              Copia_Dato = new struct Nodo;
-                          
-              if(Cantidad_Nodos_Lista == 0)
+              Serial.printf("Encontre el Nodo /M%003d\n",i);
+              strcpy(Nombre_Archivo_Salida_Lista,  Nombre_Archivo_Perdido);    // Guardo nueva salida
+              do
               {
-                    Entrada_Lista = Copia_Dato;
-                    Salida_Lista  = Copia_Dato;
-                    Copia_Dato->Nodo_Frontal = Copia_Dato;
-                    Copia_Dato->Nodo_Trasero = Copia_Dato;
-              }
-              else
-              {
-                    Copia_Dato->Nodo_Trasero = Entrada_Lista->Nodo_Trasero;
-                    Entrada_Lista->Nodo_Trasero = Copia_Dato;
-            
-                    Salida_Lista->Nodo_Frontal = Copia_Dato;        
-                    Copia_Dato->Nodo_Frontal = Entrada_Lista;
-            
-                    Entrada_Lista = Copia_Dato;
-              }
-              Cantidad_Nodos_Lista++;
-              strcpy(Copia_Dato->Nombre_Archivo,Nombre_Archivo_Perdido);
+                  File Archivo_Perdido = SPIFFS.open(Nombre_Archivo_Perdido,"a+");
+                  Cantidad_Nodos_Lista++;
+                    int n;
+                  for(n=0; Nombre_Archivo_Perdido[n-1] != '\n';n++)
+                      Nombre_Archivo_Perdido[n] = (char)Archivo_Perdido.read();
+                  Nombre_Archivo_Perdido[n-1] = '\0';
+                  if(strcmp( Nombre_Archivo_Perdido,  Nombre_Archivo_Salida_Lista) == 0)
+                      sprintf(Nombre_Archivo_Entrada_Lista,"%s",Archivo_Perdido.name());  // Guardo nueva entrada
+                      
+                  Archivo_Perdido.close();
+              }while(strcmp( Nombre_Archivo_Perdido, Nombre_Archivo_Salida_Lista) != 0);
+              Serial.printf("Termino la reparacion de la lista, se recuperaron %d Nodos\n",Cantidad_Nodos_Lista);
+              return true;
         }
-  }               
+  }
   Serial.printf("Termino la reparacion de la lista, se recuperaron %d Nodos\n",Cantidad_Nodos_Lista);
   return true;
 }

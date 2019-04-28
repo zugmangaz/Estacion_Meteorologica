@@ -23,7 +23,10 @@
 #include <PubSubClient.h>
 #include <stdint.h>
 
-#define TOPIC_DATA    "iot/Dev"
+#define AWS_MQTT_ENDPOINT "a14ifzhh6b83pg-ats.iot.us-east-1.amazonaws.com"
+#define MQTT_TLS_PORT     8883
+#define TOPIC_DATA        "iot/Dev"
+#define CLIENT_ID         "raspy" 
 
 /*--------------------------
      Tiempos Mediciones   
@@ -75,7 +78,6 @@ void Mensaje_Broker_MQTT(char* , byte* , unsigned int );
 Thread Thread_MQTT =  Thread();
 int Tick_Cliente_MQTT;
 
-
 WiFiClientSecure espClient;
 PubSubClient client_MQTT(espClient);
 //espClient = WiFiClientSecure();
@@ -91,27 +93,27 @@ PubSubClient client_MQTT(espClient);
 //IPAddress AWS_MQTT_endpoint(192,168,2,4);
 //const char  AWS_MQTT_endpoint[]   = {"m16.cloudmqtt.com"}; //"34.230.23.213"; //
 //const char* AWS_MQTT_endpoint = "a14ifzhh6b83pg.iot.us-east-1.amazonaws.com"; //MQTT broker ip
-const char* AWS_MQTT_endpoint = "a14ifzhh6b83pg-ats.iot.us-east-1.amazonaws.com";
+//const char* AWS_MQTT_endpoint = "a14ifzhh6b83pg-ats.iot.us-east-1.amazonaws.com";
 //int         MQTT_Port     = 15233;
-int         MQTT_Port     = 8883;
-int         MQTT_SSL_Port = 25233;
-int         MQTT_TLS_Port = 8883;
+//int         MQTT_Port     = 8883;
+//int         MQTT_SSL_Port = 25233;
+//int         MQTT_TLS_Port = 8883;
 
-char        *USERNAME = "Gabriel";   
-char        *PASSWORD = "12345678";     
-String      clientId = "raspy";
-char        clientId_Char[30];
+//char        *USERNAME = "Gabriel";   
+//char        *PASSWORD = "12345678";     
+//String      clientId = "raspy";
+//char        clientId_Char[]= "raspy";
 
 
-extern unsigned char Num_Sensor;
+//extern unsigned char Num_Sensor;
 extern struct Informacion_Sensor Data_Sensor[CANTIDAD_SENSORES];
 
 
 
 //String Topic_Data = "iot/Dev";
 
-char *Topic_LW = "";
-char *LW_Msg = "Me desconecte";
+//char *Topic_LW = "";
+//char *LW_Msg = "Me desconecte";
 
 
 /* ----------------------------------------------------------------------------------------------
@@ -135,7 +137,7 @@ void Inicializar_Cliente_MQTT(void)
 {
 
   Serial.printf("Tamano heap al inicio de carga certificados: %u\n", ESP.getFreeHeap());
-    unsigned char char_private_key[1190];
+//    unsigned char char_private_key[1190];
     
     // Load private key file
     File Private_key = SPIFFS.open("/cf055fd78b-private.der.key", "r");
@@ -192,9 +194,9 @@ void Inicializar_Cliente_MQTT(void)
 
 
 //    clientId += String(random(0xffff), HEX);
-    clientId.toCharArray(clientId_Char,30);
-    client_MQTT.setServer(AWS_MQTT_endpoint, MQTT_TLS_Port);
-    client_MQTT.setCallback(Mensaje_Broker_MQTT);
+//    clientId.toCharArray(clientId_Char,30);
+    client_MQTT.setServer(AWS_MQTT_ENDPOINT, MQTT_TLS_PORT);
+//    client_MQTT.setCallback(Mensaje_Broker_MQTT);
   
     Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
     Serial.println(F("Cliente MQTT Inicializado"));
@@ -250,7 +252,7 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
 //          Serial.printf("Conexion MQTT heap size: %u\n", ESP.getFreeHeap());
           if(Falla_Conexion)
               ESP.reset();
-          if(client_MQTT.connect(clientId_Char))//, Topic_LW, 1, true, LW_Msg, true))
+          if(client_MQTT.connect(CLIENT_ID))//, Topic_LW, 1, true, LW_Msg, true))
           {
               Serial.println(F("Conexion MQTT exitosa"));
               Falla_Conexion = false;
@@ -333,9 +335,10 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
 }
 
 
-
+/*
 //------------------------CALLBACK-----------------------------
-void Mensaje_Broker_MQTT(char* topic, byte* payload, unsigned int length) {
+void Mensaje_Broker_MQTT(char* topic, byte* payload, unsigned int length) 
+{
 
   char PAYLOAD[5] = "    ";
   
@@ -347,7 +350,7 @@ void Mensaje_Broker_MQTT(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println(PAYLOAD);
 
-/*  if (String(topic) ==  String(SALIDADIGITAL)) {
+  if (String(topic) ==  String(SALIDADIGITAL)) {
     if (payload[1] == 'N'){
      digitalWrite(12, HIGH);
     }
@@ -359,6 +362,7 @@ void Mensaje_Broker_MQTT(char* topic, byte* payload, unsigned int length) {
   if (String(topic) ==  String(SALIDAANALOGICA)) {
     analogWrite(13, String(PAYLOAD).toInt());
   }
-*/
+
 
 }
+*/

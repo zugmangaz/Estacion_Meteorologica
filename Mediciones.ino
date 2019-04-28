@@ -320,7 +320,7 @@ Retorno_funcion  Rutina_Estado_LEER_MEDICION_ADC(void)
           Ruido_dB = 20*log10((float)Envolvente/ADC_FULL_SCALE);
 
           Tick_Mediciones = TICKS_MEDIR_TEMP_HUMEDAD;     
-          Serial.printf("Datos!!! %d %3.2f dB %d %d \n",Audio, Ruido_dB, Gas1, Gas2);
+//          Serial.printf("Datos!!! %d %3.2f dB %d %d \n",Audio, Ruido_dB, Gas1, Gas2);
           Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_MEDIR_HUMEDAD;
       }
       else
@@ -361,8 +361,8 @@ Retorno_funcion  Rutina_Estado_LEER_MEDICION_HUMEDAD(void)
   else
       PPM_Humedad = Evento_Humedad.relative_humidity;
 
-  Serial.printf("Temperatura %3.1f ºC \n",Evento_Temperatura.temperature);
-  Serial.printf("Humedad %4.1f %% \n",Evento_Humedad.relative_humidity);
+//  Serial.printf("Temperatura %3.1f ºC \n",Evento_Temperatura.temperature);
+//  Serial.printf("Humedad %4.1f %% \n",Evento_Humedad.relative_humidity);
 
 //  Ecuaciones  Rs = (ADC_FULL_SCALE(255)/Gas -1) * Rl(20000)
 //              Corrected_Rs = Rs/(1.6979 - 0.012 * Temp - 0.00612 * Humedad)
@@ -456,8 +456,8 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
       for(Num_Sensor=0; Num_Sensor<CANTIDAD_SENSORES; Num_Sensor++)
       {
           Data_Sensor[Num_Sensor].Lectura_Anterior = Data_Sensor[Num_Sensor].Lectura_Sensor;
-          Serial.printf("Sensor: %d, Lectura Anterior: %8.2f \n",Data_Sensor[Num_Sensor].Numero_Sensor, Data_Sensor[Num_Sensor].Lectura_Anterior);
-          Serial.printf("Sensor: %d, Time_Out_Sin_Publicaciones: %d \n",Data_Sensor[Num_Sensor].Numero_Sensor , Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones);
+//          Serial.printf("Sensor: %d, Lectura Anterior: %8.2f \n",Data_Sensor[Num_Sensor].Numero_Sensor, Data_Sensor[Num_Sensor].Lectura_Anterior);
+//          Serial.printf("Sensor: %d, Time_Out_Sin_Publicaciones: %d \n",Data_Sensor[Num_Sensor].Numero_Sensor , Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones);
           sprintf(Data_Sensor[Num_Sensor].Sensor_id,"%s-%d",Mac_Address,Num_Sensor+1);
 //          sprintf(Data_Sensor[Num_Sensor].Status,"normal");
           
@@ -522,7 +522,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
           if(Data_Sensor[Num_Sensor].Variacion_Medicion < 0)
               Data_Sensor[Num_Sensor].Variacion_Medicion *= -1;
 
-          Serial.printf("Variacion: %8.2f \n",Data_Sensor[Num_Sensor].Variacion_Medicion);
+//          Serial.printf("Variacion: %8.2f \n",Data_Sensor[Num_Sensor].Variacion_Medicion);
           
 // Verifico si alguna de las siguientes condiciones se cumple para realizar una publicacion
           if(Data_Sensor[Num_Sensor].Variacion_Medicion > Data_Sensor[Num_Sensor].Delta)      // 1 - Variacion mayor al Delta
@@ -595,7 +595,7 @@ void Enviar_Medicion(void)
                                       Data_Sensor[Num_Sensor].Highest,        \
                                       Data_Sensor[Num_Sensor].Delta,          \
                                       Data_Sensor[Num_Sensor].Status);
-          Serial.printf("JSON Serializado: %s\n",Data_Sensor[Num_Sensor].JSON_Serializado);
+//          Serial.printf("JSON Serializado: %s\n",Data_Sensor[Num_Sensor].JSON_Serializado);
           if(Falla_Conexion)
           { 
               if(!Lista_Mediciones.Agregar_Dato_Lista(Data_Sensor[Num_Sensor].JSON_Serializado))
