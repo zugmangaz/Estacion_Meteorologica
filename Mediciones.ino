@@ -277,7 +277,7 @@ Retorno_funcion  Rutina_Estado_IDLE_MEDICIONES(void)
 {
         if(!Data_Sensor[0].Numero_Sensor || Fecha_Hora_Actual.Ano == 0)
         {
-            Serial.println(F("No se han configurado las mediciones aun, no mido\n"));
+            Serial.println(F("No se han configurado las mediciones aun, no mido"));
             Tick_Mediciones = TICKS_ESPERA_INICIAL;
             Time_Out_Sin_Mediciones = TICKS_PERIODO_MEDICIONES;
             Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_IDLE_MEDICIONES;     
