@@ -57,6 +57,7 @@
 // ------------------------------------------------------
 typedef void(*Retorno_funcion)(void);
 
+Retorno_funcion   Rutina_Estado_INICIALIZACION_BROKER_MQTT(void);
 Retorno_funcion   Rutina_Estado_CONEXION_BROKER_MQTT(void);
 Retorno_funcion   Rutina_Estado_CLIENTE_LOOP_MQTT(void);
 
@@ -107,7 +108,7 @@ PubSubClient client_MQTT(espClient);
 
 //extern unsigned char Num_Sensor;
 extern struct Informacion_Sensor Data_Sensor[CANTIDAD_SENSORES];
-
+extern bool Falla_Conexion;
 
 
 //String Topic_Data = "iot/Dev";
@@ -136,69 +137,8 @@ extern struct Informacion_Sensor Data_Sensor[CANTIDAD_SENSORES];
 void Inicializar_Cliente_MQTT(void)
 {
 
-  Serial.printf("Tamano heap al inicio de carga certificados: %u\n", ESP.getFreeHeap());
-//    unsigned char char_private_key[1190];
-    
-    // Load private key file
-    File Private_key = SPIFFS.open("/cf055fd78b-private.der.key", "r");
-  //  File Private_key = SPIFFS.open("/clave-privada-dispo.key", "r"); 
   
-    if (!Private_key) 
-       Serial.println(F("La llave privada no se pudo abrir "));
-    else
-        Serial.println(F("La llave privada se abrio con exito "));
-
-
-    if (espClient.loadPrivateKey(Private_key))
-        Serial.println(F("Llave privada cargada "));
-    else
-        Serial.println(F("Llave privada no cargada "));     
-    
-    
-/*    if (espClient.setPrivateKey(clave_esp8266_bin_key, clave_esp8266_bin_key_len))
-        Serial.println("Llave privada cargada ");
-    else
-        Serial.println("Llave privada no cargada ");
-*/
-  // Load certificate file
-  File Certificate = SPIFFS.open("/cf055fd78b-certificate.der.crt", "r");
-//    File Certificate = SPIFFS.open("/dispo.crt", "r");
-
-    if (!Certificate) 
-        Serial.println(F("El certificado no se pudo abrir "));
-    else
-        Serial.println(F("El certificado se abrio con exito "));
-  
-    if (espClient.loadCertificate(Certificate))
-        Serial.println(F("Certificado cargado"));
-    else
-        Serial.println(F("Certificado no cargado"));
- 
-
-    // Load CA file
-    File CA = SPIFFS.open("/Verisign-CA.der.crt", "r");
-//    File CA = SPIFFS.open("/cert-trucho-de-CA-trucho.crt", "r");
-    if (!CA) 
-        Serial.println(F("No se pudo abrir el certificado de la CA "));
-    else
-        Serial.println(F("Se abrio con exito el certificado de la CA "));
-
-    if(espClient.loadCACert(CA))
-        Serial.println(F("certificado de CA cargada"));
-    else
-       Serial.println(F("certificado de CA no cargada"));
-//Private_key.close();
-//Certificate.close();
-//CA.close();
-  Serial.printf("Tamano heap al final de carga certificados: %u\n", ESP.getFreeHeap());
-
-
-//    clientId += String(random(0xffff), HEX);
-//    clientId.toCharArray(clientId_Char,30);
-    client_MQTT.setServer(AWS_MQTT_ENDPOINT, MQTT_TLS_PORT);
-//    client_MQTT.setCallback(Mensaje_Broker_MQTT);
-  
-    Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+    Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_INICIALIZACION_BROKER_MQTT;
     Serial.println(F("Cliente MQTT Inicializado"));
 
     Thread_MQTT.onRun(Cliente_MQTT);
@@ -243,6 +183,76 @@ void Cliente_MQTT()
                   Estados Mediciones
   ------------------------------------------------------ */
 //------------------------   1   ------------------------------
+Retorno_funcion  Rutina_Estado_INICIALIZACION_BROKER_MQTT(void)
+{
+
+    if(Falla_Conexion)
+        Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_INICIALIZACION_BROKER_MQTT;
+    else
+    {  
+          
+        Serial.printf("Tamano heap al inicio de carga certificados: %u\n", ESP.getFreeHeap());
+        
+        unsigned char char_private_key[1190];
+        
+        // Load private key file
+        File Private_key = SPIFFS.open("/cf055fd78b-private.der.key", "r");
+      //  File Private_key = SPIFFS.open("/clave-privada-dispo.key", "r"); 
+      
+        if (!Private_key) 
+           Serial.println(F("La llave privada no se pudo abrir "));
+        else
+            Serial.println(F("La llave privada se abrio con exito "));
+    
+        if (espClient.loadPrivateKey(Private_key))
+            Serial.println(F("Llave privada cargada "));
+        else
+            Serial.println(F("Llave privada no cargada "));     
+            
+      // Load certificate file
+      File Certificate = SPIFFS.open("/cf055fd78b-certificate.der.crt", "r");
+    //    File Certificate = SPIFFS.open("/dispo.crt", "r");
+    
+        if (!Certificate) 
+            Serial.println(F("El certificado no se pudo abrir "));
+        else
+            Serial.println(F("El certificado se abrio con exito "));
+      
+        if (espClient.loadCertificate(Certificate))
+            Serial.println(F("Certificado cargado"));
+        else
+            Serial.println(F("Certificado no cargado"));
+     
+        // Load CA file
+        File CA = SPIFFS.open("/Verisign-CA.der.crt", "r");
+    //    File CA = SPIFFS.open("/cert-trucho-de-CA-trucho.crt", "r");
+        if (!CA) 
+            Serial.println(F("No se pudo abrir el certificado de la CA "));
+        else
+            Serial.println(F("Se abrio con exito el certificado de la CA "));
+    
+        if(espClient.loadCACert(CA))
+            Serial.println(F("certificado de CA cargada"));
+        else
+           Serial.println(F("certificado de CA no cargada"));
+
+        Private_key.close();
+        Certificate.close();
+        CA.close();
+        
+        Serial.printf("Tamano heap al final de carga certificados: %u\n", ESP.getFreeHeap());
+    
+    
+    //    clientId += String(random(0xffff), HEX);
+        clientId.toCharArray(clientId_Char,30);
+        client_MQTT.setServer(AWS_MQTT_endpoint, MQTT_TLS_Port);
+        client_MQTT.setCallback(Mensaje_Broker_MQTT);
+        Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+    }
+    
+    return Puntero_Proximo_Estado_Cliente_MQTT;
+}
+//------------------------   1   ------------------------------
 Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
 {
 
@@ -265,8 +275,9 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
               Serial.println(client_MQTT.state()); 
               Falla_Conexion = true;
 //              client_MQTT.disconnect();
+              Serial.printf("heap size despues de liberar MQTT: %u\n", ESP.getFreeHeap());
               Tick_Cliente_MQTT = TICKS_ESPERA_PARA_CONECTAR;
-              Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+              Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_INICIALIZACION_BROKER_MQTT;
           }    
       }
       else
