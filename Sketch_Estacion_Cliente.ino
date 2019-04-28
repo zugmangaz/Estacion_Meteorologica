@@ -52,7 +52,7 @@ void setup() {
   Inicializar_Wifi();
   Inicializar_EEPROM();
   Inicializar_Leds1();
-//  Inicializar_Mediciones();
+  Inicializar_Mediciones();
   Inicializar_Cliente_MQTT();
   Serial.printf("Tamano heap al inicio: %u\n", ESP.getFreeHeap());
  

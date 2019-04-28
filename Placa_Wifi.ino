@@ -114,7 +114,7 @@ int Estado_Wifi;
 int time_out;
 static int tick_wifi;
 
-bool Falla_Conexion = false;
+bool Falla_Conexion = true;
 
 
 /* ----------------------------------------------------------------------------------------------
@@ -262,7 +262,7 @@ void Conexion_WiFi(void)
 //                                      Serial.println(Direccion_IP);
                                       Falla_Conexion = false;
 
-//                                      Inicializar_Servicios();
+                                      Inicializar_Servicios();
                                       
 //                                      time_out = TICKS_ESPERAR_CONEXION_CLIENTE_TIMEOUT;
                                       tick_wifi = TICKS_VERIFICAR_CONEXION_WIFI;
@@ -284,7 +284,7 @@ void Conexion_WiFi(void)
  
               
               case VERIFICAR_CONEXION_WIFI:
-                            if(WiFi.status() != WL_CONNECTED || Falla_Conexion) 
+                            if(WiFi.status() != WL_CONNECTED)// || Falla_Conexion) 
                             {
                                tick_wifi = TICKS_ESPERA_DESCONECTADO;
                                Estado_Wifi = DESCONECTAR_WIFI;  
