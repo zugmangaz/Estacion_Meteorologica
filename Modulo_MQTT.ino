@@ -244,59 +244,65 @@ Retorno_funcion  Rutina_Estado_INICIALIZACION_BROKER_MQTT(void)
     
     
     //    clientId += String(random(0xffff), HEX);
-        clientId.toCharArray(clientId_Char,30);
-        client_MQTT.setServer(AWS_MQTT_endpoint, MQTT_TLS_Port);
-        client_MQTT.setCallback(Mensaje_Broker_MQTT);
+    //    clientId.toCharArray(clientId_Char,30);
+        client_MQTT.setServer(AWS_MQTT_ENDPOINT, MQTT_TLS_PORT);
+//        client_MQTT.setCallback(Mensaje_Broker_MQTT);
         Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
     }
     
     return Puntero_Proximo_Estado_Cliente_MQTT;
 }
+
 //------------------------   1   ------------------------------
 Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
 {
-
-      if(!client_MQTT.connected())
-      {
-//          Serial.printf("MQTT No esta conectado\n");
-//          Serial.printf("Conexion MQTT heap size: %u\n", ESP.getFreeHeap());
-//          if(Falla_Conexion)
-//              ESP.reset();
-          if(client_MQTT.connect(CLIENT_ID))//, Topic_LW, 1, true, LW_Msg, true))
-          {
-              Serial.println(F("Conexion MQTT exitosa"));
-              Falla_Conexion = false;
-              Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
-          }
-          else
-          {            
-              Serial.println(F("Conexion MQTT fallida"));
-              Serial.print("failed, rc="); 
-              Serial.println(client_MQTT.state()); 
-              Falla_Conexion = true;
-//              client_MQTT.disconnect();
-              Serial.printf("heap size despues de liberar MQTT: %u\n", ESP.getFreeHeap());
-              Tick_Cliente_MQTT = TICKS_ESPERA_PARA_CONECTAR;
-              Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_INICIALIZACION_BROKER_MQTT;
-          }    
-      }
-      else
-        Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
-
-      return Puntero_Proximo_Estado_Cliente_MQTT;
-
+    if(Falla_Conexion)
+        Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+    else
+    {  
+        if(!client_MQTT.connected())
+        {
+    //          Serial.printf("MQTT No esta conectado\n");
+    //          Serial.printf("Conexion MQTT heap size: %u\n", ESP.getFreeHeap());
+    //          if(Falla_Conexion)
+    //              ESP.reset();
+            if(client_MQTT.connect(CLIENT_ID))//, Topic_LW, 1, true, LW_Msg, true))
+            {
+                Serial.println(F("Conexion MQTT exitosa"));
+                Falla_Conexion = false;
+                Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
+            }
+            else
+            {            
+                Serial.println(F("Conexion MQTT fallida"));
+                Serial.print("failed, rc="); 
+                Serial.println(client_MQTT.state()); 
+                Falla_Conexion = true;
+    //              client_MQTT.disconnect();
+                Serial.printf("heap size despues de desconexion MQTT: %u\n", ESP.getFreeHeap());
+                Tick_Cliente_MQTT = TICKS_ESPERA_PARA_CONECTAR;
+                Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+            }    
+        }
+        else
+          Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
+    }
+    return Puntero_Proximo_Estado_Cliente_MQTT;
 
 }
 
 //------------------------      2      ------------------------------
 Retorno_funcion  Rutina_Estado_CLIENTE_LOOP_MQTT(void)
 {      
-      client_MQTT.loop();  
-      
-      Tick_Cliente_MQTT = TICKS_ESPERA_PARA_PUBLICAR;
-      Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_PUBLICAR_LUZ_MQTT;
+      Serial.printf("Heap size previo a MQTT Loop: %u\n", ESP.getFreeHeap());
+      if(!client_MQTT.loop())
+         Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+      else        
+      {
+          Tick_Cliente_MQTT = TICKS_ESPERA_PARA_PUBLICAR;
+          Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_PUBLICAR_LUZ_MQTT;
+      }
       return Puntero_Proximo_Estado_Cliente_MQTT;
-
 }
 
 //------------------------     3     ------------------------------
