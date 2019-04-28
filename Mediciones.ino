@@ -25,7 +25,7 @@
 #include <Tiempo.h>
 #include <MQ135.h>
 //#include <Mediciones.h>
-
+//#include <Lista_Circular_con_Archivo.h>
 /*--------------------------
      Definiciones   
  --------------------------*/
@@ -215,6 +215,7 @@ void Inicializar_Mediciones(void)
 {
 
 //  Wire.begin(MASTER_SDA,MASTER_SCL)             // Define los pines del bus I2C, primero SDA y segundo SCL
+  Serial.println(F("Busco la lista perdida"));
   Lista_Mediciones.Reparar_Lista();
   Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_IDLE_MEDICIONES;
   Tick_Mediciones = TICKS_ESPERA_INICIAL;

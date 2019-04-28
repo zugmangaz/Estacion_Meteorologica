@@ -376,8 +376,8 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
     if(httpCode == 200)
     {
           // Use arduinojson.org/assistant to compute the capacity.
-//          const size_t capacity = JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 720;
-          const size_t capacity = JSON_OBJECT_SIZE(4) + JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 353;
+          const size_t capacity = JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 720;
+//          const size_t capacity = JSON_OBJECT_SIZE(4) + JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 353;
           StaticJsonDocument<capacity> Configuracion_Sensores;
           // Deserialize JSON object
           DeserializationError error = deserializeJson(Configuracion_Sensores, Respuesta_HTTP);
@@ -388,11 +388,23 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
               Serial.println(error.c_str()); 
           }
               
-          const JsonObject& Objeto_Configuracion_Sensores = Configuracion_Sensores["sensors"];
+//          const JsonObject& Objeto_Configuracion_Sensores = Configuracion_Sensores["sensors"];
  
           for(Num_Sensor = 0 ; Num_Sensor <CANTIDAD_DE_SENSORES ; Num_Sensor++)
           { 
-              while(Objeto_Configuracion_Sensores[Num_Sensor]["nroSensor"]
+              const JsonObject& root = Configuracion_Sensores[Num_Sensor];
+              Data_Sensor[Num_Sensor].Numero_Sensor = root["nroSensor"];
+              String_JSON_Buffer                    =root["metric"];
+              sprintf(Data_Sensor[Num_Sensor].Unidad,"%s",String_JSON_Buffer);
+              Data_Sensor[Num_Sensor].Lowest        = root["lowest"];
+              Data_Sensor[Num_Sensor].Low           = root["low"];
+              Data_Sensor[Num_Sensor].High          = root["high"];
+              Data_Sensor[Num_Sensor].Highest       = root["highest"];
+              Data_Sensor[Num_Sensor].Delta         = root["delta"];
+
+
+
+/*              while(Objeto_Configuracion_Sensores[Num_Sensor]["nroSensor"]
               Data_Sensor[Num_Sensor].Numero_Sensor = Objeto_Configuracion_Sensores[Num_Sensor]["nroSensor"];
               String_JSON_Buffer                    = Objeto_Configuracion_Sensores[Num_Sensor]["metric"];
               sprintf(Data_Sensor[Num_Sensor].Unidad,"%s",String_JSON_Buffer);
@@ -401,6 +413,7 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
               Data_Sensor[Num_Sensor].High          = Objeto_Configuracion_Sensores[Num_Sensor]["high"];
               Data_Sensor[Num_Sensor].Highest       = Objeto_Configuracion_Sensores[Num_Sensor]["highest"];
               Data_Sensor[Num_Sensor].Delta         = Objeto_Configuracion_Sensores[Num_Sensor]["delta"];
+*/
 /*              Serial.println(F("Respuesta:"));
               Serial.printf("Sensor:  %d, Sensor   %d \n",          Num_Sensor, Data_Sensor[Num_Sensor].Numero_Sensor);
               Serial.printf("Sensor:  %d, Unidad   %s \n",           Num_Sensor, Data_Sensor[Num_Sensor].Unidad);
