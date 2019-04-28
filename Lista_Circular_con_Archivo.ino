@@ -34,7 +34,7 @@
 #define COLAlLENA   ERROR         // SeÃ±alizaciÃ³n de Cola Llena
 #define COLAvACIA   ERROR         // SeÃ±alizaciÃ³n de Cola VacÃ­a
 
-#define CANTIDAD_MAXIMA_DATOS   10000
+#define CANTIDAD_MAXIMA_DATOS   2000
 #define FORMATO_NOMBRE_ARCHIVO  "/M%0004d"
 
 #define POSICION_SEEK_ARCHIVO_ANTERIOR    0     
