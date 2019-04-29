@@ -265,6 +265,7 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
 
       if (NTP_UDP.parsePacket() < NTP_MESSAGE_SIZE) 
       {   
+          Serial.printf("Faltan recibir datos del NTP, se recibieron %d bytes vuelvo a pedir hora\n",NTP_UDP.parsePacket());
           if(!--Intentos_conexion_NTP)
           {
               NTP_UDP.stop();  
@@ -276,10 +277,7 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
               Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
           }
           else
-          {
-              Serial.printf("Faltan recibir datos del NTP, se recibieron %d bytes vuelvo a pedir hora\n",NTP_UDP.parsePacket());
               Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
-          }
       }
       else
       {

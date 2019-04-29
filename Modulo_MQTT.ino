@@ -109,7 +109,7 @@ PubSubClient client_MQTT(espClient);
 //extern unsigned char Num_Sensor;
 extern struct Informacion_Sensor Data_Sensor[CANTIDAD_SENSORES];
 extern bool Falla_Conexion;
-
+unsigned char Conexiones_MQTT=0;
 
 //String Topic_Data = "iot/Dev";
 
@@ -264,11 +264,11 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
         {
     //          Serial.printf("MQTT No esta conectado\n");
     //          Serial.printf("Conexion MQTT heap size: %u\n", ESP.getFreeHeap());
-    //          if(Falla_Conexion)
-    //              ESP.reset();
             if(client_MQTT.connect(CLIENT_ID))//, Topic_LW, 1, true, LW_Msg, true))
             {
                 Serial.println(F("Conexion MQTT exitosa"));
+                if(Conexiones_MQTT++ >= 2)
+                    ESP.restart();
                 Falla_Conexion = false;
                 Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
             }
@@ -296,7 +296,10 @@ Retorno_funcion  Rutina_Estado_CLIENTE_LOOP_MQTT(void)
 {      
       Serial.printf("Heap size previo a MQTT Loop: %u\n", ESP.getFreeHeap());
       if(!client_MQTT.loop())
+      {
+         Serial.println("Detecto desconexion en MQTT Loop");
          Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+      }
       else        
       {
           Tick_Cliente_MQTT = TICKS_ESPERA_PARA_PUBLICAR;
@@ -339,7 +342,10 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
 /*                if(client_MQTT.publish(Topic_Data_Char, Medicion_Data_Char))
                     Serial.printf("El JSON se envio satisfatoriamente\n"); 
                 else
+                {
                     Serial.printf("Fallo el envio del JSON\n");
+                    Lista_Mediciones.Agregar_Dato_Lista(Medicion_Data_Char);
+                }
 */            }
             else
                 Serial.printf("Error retirando de la lista\n");
