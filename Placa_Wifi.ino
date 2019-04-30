@@ -18,7 +18,8 @@
 ;################################################################################
  */
 
-#include <ESP8266WiFi.h>
+//#include <WiFi.h>
+//#include <ESP8266WiFi.h>
 //#include <ESP8266mDNS.h>
 //#include <WiFiClient.h>
 #include <ESP8266WebServer.h>
@@ -262,7 +263,7 @@ void Conexion_WiFi(void)
 //                                      Serial.println(Direccion_IP);
                                       Falla_Conexion = false;
 
-                                      Inicializar_Servicios();
+                                      Inicializar_Generacion_Hora();
                                       
 //                                      time_out = TICKS_ESPERAR_CONEXION_CLIENTE_TIMEOUT;
                                       tick_wifi = TICKS_VERIFICAR_CONEXION_WIFI;

@@ -36,7 +36,7 @@ extern void  Inicializar_File_System();
 extern void  Inicializar_Leds1();
 extern void  Inicializar_EEPROM();
 extern void  Inicializar_Cliente_MQTT();
-
+extern void  Inicializar_Config_Sensores();
 /* -----------------------------
     - Configuracion de Modulos -
     ---------------------------- */
@@ -54,6 +54,7 @@ void setup() {
   Inicializar_Leds1();
   Inicializar_Mediciones();
   Inicializar_Cliente_MQTT();
+  Inicializar_Config_Sensores();
   Serial.printf("Tamano heap al inicio: %u\n", ESP.getFreeHeap());
  
 }

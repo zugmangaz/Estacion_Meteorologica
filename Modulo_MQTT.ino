@@ -257,13 +257,18 @@ Retorno_funcion  Rutina_Estado_INICIALIZACION_BROKER_MQTT(void)
 Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
 {
     if(Falla_Conexion)
+    {
         Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+        Serial.printf("Heap size esperando restituir internet en la conexion MQTT : %u\n", ESP.getFreeHeap());
+    }
     else
     {  
         if(!client_MQTT.connected())
         {
+            Serial.print(F("MQTT No conectado, status rc=")); 
+            Serial.println(client_MQTT.state()); 
             Serial.println(F("Intento conexion MQTT"));
-    //          Serial.printf("Conexion MQTT heap size: %u\n", ESP.getFreeHeap());
+            Serial.printf("Heap size para la conexion MQTT : %u\n", ESP.getFreeHeap());
             if(client_MQTT.connect(CLIENT_ID))//, Topic_LW, 1, true, LW_Msg, true))
             {
                 Serial.println(F("Conexion MQTT exitosa"));
