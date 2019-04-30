@@ -343,9 +343,10 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
     Sha256 hasher;
     extern byte Mac_Address[LONGITUD_MAC_ADDRESS+1];
 
-    Serial.printf("Tamano heap antes de solicitar configuraciones: %u\n", ESP.getFreeHeap());
+    http.setReuse(true);
     Serial.printf("MAC ADDRESS_HoRA_ACTUAL: %s%s\n",Mac_Address,Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
     sprintf(Fecha,"%02d-%02d-%04d-",Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Ano);
+    Serial.printf("Tamano heap antes de crear el hash: %u\n", ESP.getFreeHeap());
     hasher.update((byte*)Fecha, strlen(Fecha));
     hasher.update(Mac_Address, strlen((const char *)Mac_Address));
     byte hash[SHA256_BLOCK_SIZE];
