@@ -44,8 +44,8 @@
 #define LONGITUD_PATH_SERVIDOR_CONFIGURACION 150 // Longitud del Path para obtener la configuracion de los sensores
 #define LONGITUD_MAC_ADDRESS    17
 
-//#define MIEMBROS_JSON_CONFIGURACION_SENSORES 8
-#define MIEMBROS_JSON_CONFIGURACION_SENSORES 11
+#define MIEMBROS_JSON_CONFIGURACION_SENSORES 8
+//#define MIEMBROS_JSON_CONFIGURACION_SENSORES 11
 
 #define NUMERO_INTENTOS_CONEXION_NTP 5
 
@@ -288,6 +288,9 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
           // Convertir hora NTP a UNIX timestamp:
           Fecha_Hora_Actual.Reloj_UNIX = Segundos_Desde_1900 - Segundo_en_Setenta_Anos + UTC * 3600; // Restamos los 70 años:
           Fecha_Hora_Actual.Millis_Ultimo_Sinc = millis();
+          Calcular_Fecha_Hora(Fecha_Hora_Actual.Reloj_UNIX);
+          sprintf(Fecha_Hora_Actual.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Actual.Ano, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Hora, Fecha_Hora_Actual.Minuto, Fecha_Hora_Actual.Segundo);
+          Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
 
 /*          if(!Hora_Inicial_Establecida)
           {
@@ -359,12 +362,15 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
        pos+=sprintf(Servidor_Configuracion+pos,"%02x",hash[i]);
     Serial.printf("Dir: %s \n",Servidor_Configuracion);
     
+    Serial.printf("Tamano heap antes de iniciar cliente HTTP: %u\n", ESP.getFreeHeap());
     http.begin(Servidor_Configuracion);
     httpCode = http.GET();            //Enviar pedido
     Serial.printf("HTTP Code: %d \n",httpCode); 
-//    Respuesta_HTTP = http.getString();    //Guardar la respuesta del servidor
-    httpCode = 200;  // ************** Eliminar junto con la linea de abajo
-    Respuesta_HTTP = String(F("[{\"nroSensor\": 1,\"serial\": \"aa:bb:cc:dd:ee:ff-1\",\"readTime\":\"01/01/19 00:00:00\",\"metric\":\"C\",\"value\": 25.2,\"lowest\": 20,\"low\": 25,\"high\": 30,\"highest\": 50,\"delta\": 5,\"status\": \"normal\"}, {\"nroSensor\": 2,\"serial\": \"aa:bb:cc:dd:ee:ff-2\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"%\",\"value\": 25.2,\"lowest\": 5,\"low\": 15,\"high\": 70,\"highest\": 80,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 3,\"serial\": \"aa:bb:cc:dd:ee:ff-3\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"Lux\",\"value\": 25.2,\"lowest\": 5,\"low\": 5,\"high\": 1000,\"highest\": 10000,\"delta\": 100,\"status\": \"normal\"},{\"nroSensor\": 4,\"serial\": \"aa:bb:cc:dd:ee:ff-4\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"dBR\",\"value\":-25,\"lowest\": -40,\"low\": -20,\"high\": -5,\"highest\": -3,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 5,\"serial\": \"aa:bb:cc:dd:ee:ff-5\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"PPM\",\"value\": 25.2,\"lowest\": 10,\"low\": 25,\"high\": 80,\"highest\": 100,\"delta\": 10,\"status\": \"normal\"}]"));
+    Respuesta_HTTP = http.getString();    //Guardar la respuesta del servidor
+//    httpCode = 200;  // ************** Eliminar junto con la linea de abajo
+//    Respuesta_HTTP = String(F("[{\"nroSensor\": 1,\"serial\": \"aa:bb:cc:dd:ee:ff-1\",\"readTime\":\"01/01/19 00:00:00\",\"metric\":\"C\",\"value\": 25.2,\"lowest\": 20,\"low\": 25,\"high\": 30,\"highest\": 50,\"delta\": 5,\"status\": \"normal\"}, {\"nroSensor\": 2,\"serial\": \"aa:bb:cc:dd:ee:ff-2\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"%\",\"value\": 25.2,\"lowest\": 5,\"low\": 15,\"high\": 70,\"highest\": 80,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 3,\"serial\": \"aa:bb:cc:dd:ee:ff-3\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"Lux\",\"value\": 25.2,\"lowest\": 5,\"low\": 5,\"high\": 1000,\"highest\": 10000,\"delta\": 100,\"status\": \"normal\"},{\"nroSensor\": 4,\"serial\": \"aa:bb:cc:dd:ee:ff-4\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"dBR\",\"value\":-25,\"lowest\": -40,\"low\": -20,\"high\": -5,\"highest\": -3,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 5,\"serial\": \"aa:bb:cc:dd:ee:ff-5\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"PPM\",\"value\": 25.2,\"lowest\": 10,\"low\": 25,\"high\": 80,\"highest\": 100,\"delta\": 10,\"status\": \"normal\"}]"));
+
+    Serial.printf("Tamano heap luego de obtener configuraciones: %u\n", ESP.getFreeHeap());
     
     Serial.print(F("Codigo respuesta del servidor:")); //200 is OK
     Serial.println(httpCode);   //Print HTTP return code
@@ -376,8 +382,10 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
     if(httpCode == 200)
     {
           // Use arduinojson.org/assistant to compute the capacity.
-          const size_t capacity = JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 720;
-//          const size_t capacity = JSON_OBJECT_SIZE(4) + JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 353;
+//          const size_t capacity = JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 720;
+          const size_t capacity = JSON_OBJECT_SIZE(4) + JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 353;
+          Serial.printf("Tamano heap antes de crear objeto JSON: %u\n", ESP.getFreeHeap());
+
           StaticJsonDocument<capacity> Configuracion_Sensores;
           // Deserialize JSON object
           DeserializationError error = deserializeJson(Configuracion_Sensores, Respuesta_HTTP);
@@ -388,11 +396,14 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
               Serial.println(error.c_str()); 
           }
               
-//          const JsonObject& Objeto_Configuracion_Sensores = Configuracion_Sensores["sensors"];
- 
-          for(Num_Sensor = 0 ; Num_Sensor <CANTIDAD_DE_SENSORES ; Num_Sensor++)
-          { 
-              const JsonObject& root = Configuracion_Sensores[Num_Sensor];
+          const JsonArray& Array_Configuracion_Sensores = Configuracion_Sensores["sensors"];
+          Num_Sensor = 0;
+          for(JsonArray::iterator it=Array_Configuracion_Sensores.begin(); it!=Array_Configuracion_Sensores.end(); ++it) 
+          {
+            const JsonObject& Objeto_Configuracion_Sensores = *it;
+//          for(Num_Sensor = 0 ; Num_Sensor <CANTIDAD_DE_SENSORES ; Num_Sensor++)
+//          { 
+/*              const JsonObject& root = Configuracion_Sensores[Num_Sensor];
               Data_Sensor[Num_Sensor].Numero_Sensor = root["nroSensor"];
               String_JSON_Buffer                    =root["metric"];
               sprintf(Data_Sensor[Num_Sensor].Unidad,"%s",String_JSON_Buffer);
@@ -401,19 +412,20 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
               Data_Sensor[Num_Sensor].High          = root["high"];
               Data_Sensor[Num_Sensor].Highest       = root["highest"];
               Data_Sensor[Num_Sensor].Delta         = root["delta"];
-
-
-
-/*              while(Objeto_Configuracion_Sensores[Num_Sensor]["nroSensor"]
-              Data_Sensor[Num_Sensor].Numero_Sensor = Objeto_Configuracion_Sensores[Num_Sensor]["nroSensor"];
-              String_JSON_Buffer                    = Objeto_Configuracion_Sensores[Num_Sensor]["metric"];
-              sprintf(Data_Sensor[Num_Sensor].Unidad,"%s",String_JSON_Buffer);
-              Data_Sensor[Num_Sensor].Lowest        = Objeto_Configuracion_Sensores[Num_Sensor]["lowest"];
-              Data_Sensor[Num_Sensor].Low           = Objeto_Configuracion_Sensores[Num_Sensor]["low"];
-              Data_Sensor[Num_Sensor].High          = Objeto_Configuracion_Sensores[Num_Sensor]["high"];
-              Data_Sensor[Num_Sensor].Highest       = Objeto_Configuracion_Sensores[Num_Sensor]["highest"];
-              Data_Sensor[Num_Sensor].Delta         = Objeto_Configuracion_Sensores[Num_Sensor]["delta"];
 */
+//              while(Objeto_Configuracion_Sensores[Num_Sensor]["nroSensor"]
+              
+              Data_Sensor[Num_Sensor].Numero_Sensor = Objeto_Configuracion_Sensores["nroSensor"];
+              String_JSON_Buffer                    = Objeto_Configuracion_Sensores["metric"];
+              sprintf(Data_Sensor[Num_Sensor].Unidad,"%s",String_JSON_Buffer);
+              Data_Sensor[Num_Sensor].Lowest        = Objeto_Configuracion_Sensores["lowest"];
+              Data_Sensor[Num_Sensor].Low           = Objeto_Configuracion_Sensores["low"];
+              Data_Sensor[Num_Sensor].High          = Objeto_Configuracion_Sensores["high"];
+              Data_Sensor[Num_Sensor].Highest       = Objeto_Configuracion_Sensores["highest"];
+              Data_Sensor[Num_Sensor].Delta         = Objeto_Configuracion_Sensores["delta"];
+
+              Num_Sensor++;
+
 /*              Serial.println(F("Respuesta:"));
               Serial.printf("Sensor:  %d, Sensor   %d \n",          Num_Sensor, Data_Sensor[Num_Sensor].Numero_Sensor);
               Serial.printf("Sensor:  %d, Unidad   %s \n",           Num_Sensor, Data_Sensor[Num_Sensor].Unidad);
@@ -427,6 +439,7 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
           }        
           Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
           Configuracion_Sensores.clear();
+          Serial.printf("Tamano heap luego de destruir objeto JSON: %u\n", ESP.getFreeHeap());
 
     }
     else
@@ -436,6 +449,7 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
     }
     
     http.end();  //Cerrar conexion
+    Serial.printf("Tamano heap luego de cerrar cliente HTTP: %u\n", ESP.getFreeHeap());
     //     Puntero_Proximo_Estado_Servicios=(Retorno_funcion)&Rutina_Estado_OBTENER_CONFIGURACION_SENSORES;
     return Puntero_Proximo_Estado_Servicios;
 
