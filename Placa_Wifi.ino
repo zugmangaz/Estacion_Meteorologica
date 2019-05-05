@@ -100,8 +100,8 @@ Thread Thread_WIFI = Thread();
 //WiFiClient Cliente_SSID;
 ESP8266WebServer  SSID_Server(80);
 
-char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = { "TP-Link_Extender", "TP-LINK_493C42" } ;
-char Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID] = { "aa11zz44x.x55" , "notemetasconmigo"};
+char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = { "TP-LINK_493C42"  , "TP-Link_Extender"} ;
+char Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID] = { "notemetasconmigo", "aa11zz44x.x55" };
 String aux;
 
 const char SSID_Config[LONGITUD_SSID]     = "DiWaIT";
