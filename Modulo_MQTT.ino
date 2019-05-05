@@ -23,6 +23,11 @@
 #include <PubSubClient.h>
 #include <stdint.h>
 
+
+/*--------------------------
+     Definiciones AWS   
+ --------------------------*/
+
 #define AWS_MQTT_ENDPOINT "a14ifzhh6b83pg-ats.iot.us-east-1.amazonaws.com"
 #define MQTT_TLS_PORT     8883
 #define TOPIC_DATA        "iot/Dev"
@@ -70,7 +75,7 @@ Retorno_funcion   Rutina_Estado_PUBLICAR_HUMEDAD_MQTT(void);
 
 Retorno_funcion Puntero_Proximo_Estado_Cliente_MQTT;
 
-void Mensaje_Broker_MQTT(char* , byte* , unsigned int );
+//void Mensaje_Broker_MQTT(char* , byte* , unsigned int );
 
 /*--------------------------------            
 -   Variable de uso del modulo   -
@@ -110,11 +115,6 @@ PubSubClient client_MQTT(espClient);
 extern struct Informacion_Sensor Data_Sensor[CANTIDAD_SENSORES];
 extern bool Falla_Conexion;
 unsigned char Conexiones_MQTT=0;
-
-//String Topic_Data = "iot/Dev";
-
-//char *Topic_LW = "";
-//char *LW_Msg = "Me desconecte";
 
 
 /* ----------------------------------------------------------------------------------------------
@@ -193,7 +193,7 @@ Retorno_funcion  Rutina_Estado_INICIALIZACION_BROKER_MQTT(void)
           
         Serial.printf("Tamano heap al inicio de carga certificados: %u\n", ESP.getFreeHeap());
         
-        unsigned char char_private_key[1190];
+//        unsigned char char_private_key[1190];
         
         // Load private key file
         File Private_key = SPIFFS.open("/cf055fd78b-private.der.key", "r");
@@ -253,13 +253,13 @@ Retorno_funcion  Rutina_Estado_INICIALIZACION_BROKER_MQTT(void)
     return Puntero_Proximo_Estado_Cliente_MQTT;
 }
 
-//------------------------   1   ------------------------------
+//------------------------   2   ------------------------------
 Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
 {
     if(Falla_Conexion)
     {
         Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
-        Serial.printf("Heap size esperando restituir internet en la conexion MQTT : %u\n", ESP.getFreeHeap());
+//        Serial.printf("Heap size esperando restituir internet en la conexion MQTT : %u\n", ESP.getFreeHeap());
     }
     else
     {  
@@ -285,6 +285,7 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
                 Falla_Conexion = true;
     //              client_MQTT.disconnect();
                 Serial.printf("heap size despues de desconexion MQTT: %u\n", ESP.getFreeHeap());
+    
                 Tick_Cliente_MQTT = TICKS_ESPERA_PARA_CONECTAR;
                 Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
             }    
@@ -292,11 +293,15 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
         else
           Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
     }
+
+    if(ESP.getFreeHeap() > 33000)
+        ESP.restart();
+
     return Puntero_Proximo_Estado_Cliente_MQTT;
 
 }
 
-//------------------------      2      ------------------------------
+//------------------------     3      ------------------------------
 Retorno_funcion  Rutina_Estado_CLIENTE_LOOP_MQTT(void)
 {      
       Serial.printf("Heap size previo a MQTT Loop: %u\n", ESP.getFreeHeap());
@@ -313,7 +318,7 @@ Retorno_funcion  Rutina_Estado_CLIENTE_LOOP_MQTT(void)
       return Puntero_Proximo_Estado_Cliente_MQTT;
 }
 
-//------------------------     3     ------------------------------
+//------------------------     4     ------------------------------
 Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
 {
 
@@ -361,36 +366,3 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
       return Puntero_Proximo_Estado_Cliente_MQTT;
   
 }
-
-
-/*
-//------------------------CALLBACK-----------------------------
-void Mensaje_Broker_MQTT(char* topic, byte* payload, unsigned int length) 
-{
-
-  char PAYLOAD[5] = "    ";
-  
-  Serial.print("Mensaje Recibido: [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++) {
-    PAYLOAD[i] = (char)payload[i];
-  }
-  Serial.println(PAYLOAD);
-
-  if (String(topic) ==  String(SALIDADIGITAL)) {
-    if (payload[1] == 'N'){
-     digitalWrite(12, HIGH);
-    }
-    if (payload[1] == 'F'){
-      digitalWrite(12, LOW);
-    }
-  }
-
-  if (String(topic) ==  String(SALIDAANALOGICA)) {
-    analogWrite(13, String(PAYLOAD).toInt());
-  }
-
-
-}
-*/
