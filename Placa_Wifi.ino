@@ -100,8 +100,8 @@ Thread Thread_WIFI = Thread();
 //WiFiClient Cliente_SSID;
 ESP8266WebServer  SSID_Server(80);
 
-char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = {"TP-LINK_493C42"   , "TP-Link_Extender"} ;
-char Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID] = {"notemetasconmigo" , "aa11zz44x.x55"};
+char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = { "TP-Link_Extender", "TP-LINK_493C42" } ;
+char Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID] = { "aa11zz44x.x55" , "notemetasconmigo"};
 String aux;
 
 const char SSID_Config[LONGITUD_SSID]     = "DiWaIT";
@@ -114,6 +114,7 @@ byte Mac_Address[LONGITUD_MAC_ADDRESS+1];
 int Estado_Wifi;
 int time_out;
 static int tick_wifi;
+char Intentos_Conexion = 0;
 
 bool Falla_Conexion = true;
 
@@ -304,6 +305,8 @@ void Conexion_WiFi(void)
                             Serial.println(F("Wifi se desconectó "));
                             Serial.println("");
                             WiFi.disconnect();
+                            if(++Intentos_Conexion > 30)
+                                ESP.restart();
                             Falla_Conexion = true;
 
                             tick_wifi = TICKS_ESPERA_DESCONECTADO;
