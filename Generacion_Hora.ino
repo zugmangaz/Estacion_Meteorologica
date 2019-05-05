@@ -30,7 +30,7 @@
 
 
 
-#define NUMERO_INTENTOS_CONEXION_NTP 5
+#define NUMERO_INTENTOS_CONEXION_NTP                10
 
 
 /*--------------------------
@@ -41,7 +41,7 @@
 
 #define TIEMPO_INICIO_GENERACION_HORA               1        //  (1 segundo)
 #define TIEMPO_TIME_OUT_PEDIR_HORA                  5       //  (90 segundos)
-#define TIEMPO_ESPERA_RECEPCION_HORA               2        //  (2 segundos)
+#define TIEMPO_ESPERA_RECEPCION_HORA                1        //  (2 segundos)
 
 
 /*--------------------------------------
@@ -60,7 +60,7 @@ typedef void(*Retorno_funcion)(void);
 
 Retorno_funcion   Rutina_Estado_PEDIR_HORA(void);
 Retorno_funcion   Rutina_Estado_LEER_HORA(void);
-Retorno_funcion   Rutina_Estado_CALCULAR_HORA(void);
+//Retorno_funcion   Rutina_Estado_CALCULAR_HORA(void);
 
 Retorno_funcion Puntero_Proximo_Estado_Generacion_Hora;
 
@@ -77,7 +77,7 @@ Thread Thread_Generacion_Hora = Thread();
 unsigned char Tick_Generacion_Hora;
 
 WiFiUDP NTP_UDP;                   // Create an instance of the WiFiUDP class to send and receive
-IPAddress NTP_Server_IP;          // time.nist.gov NTP server address
+IPAddress NTP_Server_IP(0,0,0,0);          // time.nist.gov NTP server address
 //const char* NTP_Server_Name = "time.nist.gov";
 byte NTP_Buffer[NTP_MESSAGE_SIZE]; // buffer to hold incoming and outgoing packets
 unsigned char Intentos_conexion_NTP;
@@ -91,7 +91,7 @@ extern bool Falla_Conexion;
 
 //bool Hora_Inicial_Establecida=false;
 struct Tiempo Fecha_Hora_Actual;
-int Time_Out_Pedir_Hora;
+//int Time_Out_Pedir_Hora;
 
 
  /* ----------------------------------------------------------------------------------------------
@@ -192,18 +192,26 @@ void Generacion_Hora()
 Retorno_funcion  Rutina_Estado_PEDIR_HORA(void)
 {
 
-    memset(NTP_Buffer, 0, NTP_MESSAGE_SIZE);  // Vaciar el buffer de NTP
-    NTP_Buffer[0] = 0b11100011;       // Initialize values needed to form NTP request LI, Version, Mode
-    if(!NTP_UDP.beginPacket(NTP_Server_IP, NTP_SERVICE_PORT)) // NTP requests are to port 123
-      Serial.printf("Fallo la conexion UDP al servidor NTP\n");
-    Serial.printf("Bytes enviados por UDP %d \n",NTP_UDP.write(NTP_Buffer, NTP_MESSAGE_SIZE));
-    if(!NTP_UDP.endPacket())
+    if(NTP_Server_IP != (0,0,0,0))
+    {   
+        memset(NTP_Buffer, 0, NTP_MESSAGE_SIZE);  // Vaciar el buffer de NTP
+        NTP_Buffer[0] = 0b11100011;       // Initialize values needed to form NTP request LI, Version, Mode
+        if(!NTP_UDP.beginPacket(NTP_Server_IP, NTP_SERVICE_PORT)) // NTP requests are to port 123
+          Serial.printf("Fallo la conexion UDP al servidor NTP\n");
+        Serial.printf("Bytes enviados por UDP %d \n",NTP_UDP.write(NTP_Buffer, NTP_MESSAGE_SIZE));
+        Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_LEER_HORA;
+        if(!NTP_UDP.endPacket())
+        {
+            Serial.printf("Fallo el envio de datos UDP al servidor NTP\n");
+            Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
+        }
+        Tick_Generacion_Hora = TICKS_ESPERA_RECEPCION_HORA;
+    }
+    else
     {
-        Serial.printf("Fallo el envio de datos UDP al servidor NTP\n");
+        Inicializar_Calculo_Hora();  
         Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
     }
-    Tick_Generacion_Hora = TICKS_ESPERA_RECEPCION_HORA;
-    Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_LEER_HORA;
     return Puntero_Proximo_Estado_Generacion_Hora;
 
 }
@@ -213,43 +221,47 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
 {
 
 
-      if (NTP_UDP.parsePacket() < NTP_MESSAGE_SIZE) 
+      if (NTP_UDP.parsePacket() >= NTP_MESSAGE_SIZE) 
       {   
-          Serial.printf("Faltan recibir datos del NTP, se recibieron %d bytes vuelvo a pedir hora\n",NTP_UDP.parsePacket());
-          if(!--Intentos_conexion_NTP)
-          {
-              NTP_UDP.stop();  
-              Inicializar_Calculo_Hora();           
-          }
-          if(Fecha_Hora_Actual.Reloj_UNIX)
-          {
-              Time_Out_Pedir_Hora =  TIME_OUT_PEDIR_HORA;   
-              Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
-          }
-          else
-              Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
-      }
-      else
-      {
           const unsigned long Segundo_en_Setenta_Anos = 2208988800UL;  // Unix time comienza el Jan 1 1970. Son 2208988800 segundos para el reloj NTP:
           Falla_Conexion = false;             
           NTP_UDP.read(NTP_Buffer, NTP_MESSAGE_SIZE); // read the packet into the buffer    
           unsigned long Segundos_Desde_1900 = (NTP_Buffer[40] << 24) | (NTP_Buffer[41] << 16) | (NTP_Buffer[42] << 8) | NTP_Buffer[43];
           // Convertir hora NTP a UNIX timestamp:
           Fecha_Hora_Actual.Reloj_UNIX = Segundos_Desde_1900 - Segundo_en_Setenta_Anos + UTC * 3600; // Restamos los 70 años:
-          Fecha_Hora_Actual.Millis_Ultimo_Sinc = millis();
-          Calcular_Fecha_Hora(Fecha_Hora_Actual.Reloj_UNIX);
-          sprintf(Fecha_Hora_Actual.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Actual.Ano, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Hora, Fecha_Hora_Actual.Minuto, Fecha_Hora_Actual.Segundo);
-          Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
+ //         Fecha_Hora_Actual.Millis_Ultimo_Sinc = millis();
 
-          Time_Out_Pedir_Hora =  TIME_OUT_PEDIR_HORA;   
-          Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
+//          Calcular_Fecha_Hora(Fecha_Hora_Actual.Reloj_UNIX);
+          Serial.println(F("Recibo hora"));
+//          Time_Out_Pedir_Hora =  TIME_OUT_PEDIR_HORA;   
+//          Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
+      }
+      else
+      {
+          Serial.printf("Faltan recibir datos del NTP, se recibieron %d bytes vuelvo a pedir hora\n",NTP_UDP.parsePacket());
+          if(!--Intentos_conexion_NTP)
+//                Falla_Conexion = true;  
+              ESP.restart();
+          if(!Fecha_Hora_Actual.Reloj_UNIX)
+          {
+              Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
+              return Puntero_Proximo_Estado_Generacion_Hora;
+          }
           
       } 
+
+      Fecha_Hora_Actual.Reloj_UNIX += (millis() - Fecha_Hora_Actual.Millis_Ultimo_Sinc)/1000;
+      Fecha_Hora_Actual.Millis_Ultimo_Sinc = millis();    
+      Calcular_Fecha_Hora(Fecha_Hora_Actual.Reloj_UNIX);
+
+      sprintf(Fecha_Hora_Actual.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Actual.Ano, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Hora, Fecha_Hora_Actual.Minuto, Fecha_Hora_Actual.Segundo);
+      Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
+
+      Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
       return Puntero_Proximo_Estado_Generacion_Hora;
 
 }
-
+/*
 //------------------------   3   ------------------------------
 Retorno_funcion  Rutina_Estado_CALCULAR_HORA(void)
 {   
@@ -273,7 +285,7 @@ Retorno_funcion  Rutina_Estado_CALCULAR_HORA(void)
 
 
 
-
+*/
 
 
 void Calcular_Fecha_Hora(unsigned long Tiempo_Epoch)
