@@ -232,7 +232,6 @@ void Conexion_WiFi(void)
                              Serial.print(F("Conectando a \n"));
                              Serial.println(Tabla_SSID[numero_de_SSID]);
                              Serial.println();
-                             WiFi.mode(WIFI_OFF);
                              WiFi.mode(WIFI_STA);
                              WiFi.macAddress(Mac_Address);
                              sprintf((char*)Mac_Address,"%02x:%02x:%02x:%02x:%02x:%02x",Mac_Address[0],Mac_Address[1],Mac_Address[2],Mac_Address[3],Mac_Address[4],Mac_Address[5]);
@@ -305,6 +304,7 @@ void Conexion_WiFi(void)
                             Serial.println(F("Wifi se desconectó "));
                             Serial.println("");
                             WiFi.disconnect();
+                            WiFi.mode(WIFI_OFF);
                             if(++Intentos_Conexion > 30)
                                 ESP.restart();
                             Falla_Conexion = true;
