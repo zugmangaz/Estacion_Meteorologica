@@ -331,12 +331,15 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
       {
              if(strlen(Data_Sensor[i].JSON_Serializado) > 10)
              {
-/*                  if(client_MQTT.publish(Topic_Data_Char, Medicion_Data_Char))
+                  if(client_MQTT.publish(Topic_Data_Char, Medicion_Data_Char))
                       Serial.printf("El JSON se envio satisfatoriamente\n"); 
                   else
+                  {
                       Serial.printf("Fallo el envio del JSON\n");
+                      Lista_Mediciones.Agregar_Dato_Lista(Medicion_Data_Char);
+                  }
                   Serial.printf("JSON Enviado desde RAM: %s\n",Data_Sensor[i].JSON_Serializado);
-*/                  sprintf(Data_Sensor[i].JSON_Serializado,"\0");
+                  sprintf(Data_Sensor[i].JSON_Serializado,"\0");
              }
 //             else
 //                  Serial.printf("No hay mediciones en RAM para enviar del sensor %d\n",i);
@@ -349,14 +352,14 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
             if(Lista_Mediciones.Retirar_Dato_Lista(Medicion_Data_Char))
             {
                 Serial.printf("Enviando JSON desde Flash: %s\n",Medicion_Data_Char);
-/*                if(client_MQTT.publish(Topic_Data_Char, Medicion_Data_Char))
+                if(client_MQTT.publish(Topic_Data_Char, Medicion_Data_Char))
                     Serial.printf("El JSON se envio satisfatoriamente\n"); 
                 else
                 {
                     Serial.printf("Fallo el envio del JSON\n");
                     Lista_Mediciones.Agregar_Dato_Lista(Medicion_Data_Char);
                 }
-*/            }
+            }
             else
                 Serial.printf("Error retirando de la lista\n");
        
