@@ -64,7 +64,7 @@
  --------------------------*/
 
 #define TIEMPO_ESPERA_INICIAL         15000
-#define TIEMPO_PERIODO_MEDICIONES     30000   //  (30000 milisegundos)  
+#define TIEMPO_PERIODO_MEDICIONES     60000   //  (30000 milisegundos)  
 #define TIEMPO_MEDIR_ADC              100       //  (1 milisegundo)
 #define TIEMPO_LECTURA_ADC            100       //  (1 milisegundo)
 #define TIEMPO_MEDIR_TEMP_HUMEDAD     100       //  (1 milisegundo)
@@ -78,7 +78,7 @@
 #define TIEMPO_MAX_SIN_PUBLICACIONES  600000    // (600 segundos)
 
 
-#define TIEMPO_TICKER_MEDICIONES  100             // 13 milisegundos
+#define TIEMPO_TICKER_MEDICIONES  100             // 100 milisegundos
 
 
 /*--------------------------------------
