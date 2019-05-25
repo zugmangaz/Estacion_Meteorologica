@@ -44,8 +44,9 @@
 #define SENSOR_SONIDO           4
 #define SENSOR_GAS1             5
 //#define SENSOR_GAS2             6
-*/
+
 #define CANTIDAD_SENSORES       5
+*/
 
 /*---------------------------------
      Umbrales de falla sensores   
@@ -384,11 +385,11 @@ Retorno_funcion  Rutina_Estado_LEER_MEDICION_HUMEDAD(void)
 #endif
 
   Tick_Mediciones = TICKS_HABILITAR_LUZ;         
-  Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_HABILITAR_LUZ;
+  Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_EVALUAR_PUBLICACION;
   return Puntero_Proximo_Estado_Mediciones;
 
 }
-
+/*
 //------------------------      6      ------------------------------
 Retorno_funcion  Rutina_Estado_HABILITAR_LUZ(void)
 {
@@ -449,6 +450,8 @@ Retorno_funcion  Rutina_Estado_GUARDAR_MEDICION_LUZ(void)
   return Puntero_Proximo_Estado_Mediciones;
 
 }
+
+*/
 //-------------------------     10       -----------------------------
 Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
 {

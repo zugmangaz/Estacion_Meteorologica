@@ -337,8 +337,8 @@ void Inicializar_Wifi(void)
 {
 
   tick_wifi = TICKS_ESPERA_DESCONECTADO;
-  Estado_Wifi = ESTADO_WIFI_INICIAL;
-//  Estado_Wifi = CONECTAR_WIFI;
+//  Estado_Wifi = ESTADO_WIFI_INICIAL;
+  Estado_Wifi = CONECTAR_WIFI;
   numero_de_SSID = 0;
   Thread_WIFI.onRun(Conexion_WiFi);
   Thread_WIFI.setInterval(TIEMPO_TICKER_WIFI);
