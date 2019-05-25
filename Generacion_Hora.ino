@@ -295,7 +295,7 @@ void Calcular_Fecha_Hora(unsigned long Tiempo_Epoch)
     Fecha_Hora_Actual.Segundo = (Tiempo_Epoch % 60);
     Fecha_Hora_Actual.Wday    = (((Tiempo_Epoch / 86400L) + 4 ) % 7);
 
-    // Now set to be in-days.
+    // Tiempo en dias.
     Tiempo_Epoch /= 86400L;
 
     // Setup.
@@ -303,15 +303,15 @@ void Calcular_Fecha_Hora(unsigned long Tiempo_Epoch)
     uint8_t month;
     static const uint8_t monthDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
 
-    // Walk forward until we've found the number of years.
+    // Calculamos cuantos años transcurrieron hasta este año
     while((days += (LEAP_YEAR(year) ? 366 : 365)) <= Tiempo_Epoch)
         year++;
 
-    // now it is days in this year, starting at 0
+    // Calculamos cuantos dias transcurrieron en este año
     Tiempo_Epoch -= days - (LEAP_YEAR(year) ? 366 : 365);
     days=0;
 
-    // Count forward until we've run out of days.
+    // Calculamos en que mes estamos
     for (month=0; month<12; month++)
     {
         uint8_t monthLength;
