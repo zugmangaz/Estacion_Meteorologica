@@ -22,10 +22,6 @@
 #include <Conexiones_Dispositivos.h>
 
 
-
-//DHT_Unified Sensor_De_Humedad(HUMIDITY_DATA, DHT_TYPE);
-
-//DHT_Unified Sensor_De_Humedad(HUMIDITY_DATA, DHT_TYPE);
 class DHT_Unified Sensor_De_Humedad(HUMIDITY_DATA, DHT_TYPE);
 
 

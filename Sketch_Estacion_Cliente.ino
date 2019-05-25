@@ -19,6 +19,7 @@
 ;################################################################################
  */
 
+#include <Arduino.h>
 #include <Thread.h>
 #include <ThreadController.h>
 
