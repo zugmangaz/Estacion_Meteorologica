@@ -48,7 +48,7 @@
  --------------------------*/
 
 
-#define CANTIDAD_DE_SSID_A_GUARDAR   3
+#define CANTIDAD_DE_SSID_A_GUARDAR   4
 #define LONGITUD_SSID               50
 #define LONGITUD_MAC_ADDRESS        17
 
@@ -62,9 +62,9 @@
 
 #define TIEMPO_ESPERA_DESCONECTADO                      3000       // (3 milisegundos)
 #define TIEMPO_CONEXION_SOFT_AP                         1000       // (1 milisegundos)
-#define TIEMPO_CONEXION_SOFT_AP_TIMEOUT                 180000      // (60 milisegundos)   ---> Pendiente dejar al valor correspondiente
+#define TIEMPO_CONEXION_SOFT_AP_TIMEOUT                 600000      // (600000 milisegundos)   ---> Pendiente dejar al valor correspondiente
 #define TIEMPO_CONFIGURAR_SSID                          200        // (200 milisegundos)
-#define TIEMPO_CONFIGURAR_SSID_TIMEOUT                  120000      // (120 milisegundos)
+#define TIEMPO_CONFIGURAR_SSID_TIMEOUT                  600000      // (600000 milisegundos)
 #define TIEMPO_ESPERAR_CONEXION_WIFI                    1000       // (1000 milisegundo)
 #define TIEMPO_CONECTANDO_TIMEOUT                       45000      // (10000 milisegundos)
 #define TIEMPO_VERIFICAR_CONEXION_WIFI                  60000      // (60000 milisegundos)
@@ -100,12 +100,12 @@ Thread Thread_WIFI = Thread();
 //WiFiClient Cliente_SSID;
 ESP8266WebServer  SSID_Server(80);
 
-char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = { "TP-LINK_493C42"  , "TP-Link_Extender"} ;
-char Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID] = { "notemetasconmigo", "aa11zz44x.x55" };
+char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = { "TP-Link_Extender",  "DiwaIT"      , "TP-LINK_493C42"} ;
+char Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID] = { "aa11zz44x.x55",     "DiwaITr0cks" , "notemetasconmigo"};
 String aux;
 
-const char SSID_Config[LONGITUD_SSID]     = "DiWaIT";
-const char Password_Config[LONGITUD_SSID] = "excelente";
+const char SSID_Config[LONGITUD_SSID]     = "ExpertaIoT";
+const char Password_Config[LONGITUD_SSID] = "experta123";
 
 unsigned char numero_de_SSID;
 
@@ -165,7 +165,7 @@ void Conexion_WiFi(void)
 
                               WiFi.softAP(SSID_Config, Password_Config);
 //                              Direccion_IP = WiFi.softAPIP();
-//                              Serial.println(F("Access Point activado \n"));
+                              Serial.println(F("Access Point activado \n"));
 //                              Serial.print(F("IP del Access Point: "));
 //                              Serial.println(Direccion_IP);
 //                              Inicializar_DNS();
@@ -273,11 +273,11 @@ void Conexion_WiFi(void)
                              }
                              else
                              {
-/*                                   if(!numero_de_SSID)
+                                   if(!numero_de_SSID)
                                         numero_de_SSID = CANTIDAD_DE_SSID_A_GUARDAR-1;
                                    else
                                         numero_de_SSID--;
-*/                                   
+                                   
                                    tick_wifi = TICKS_ESPERA_DESCONECTADO;
                                    Estado_Wifi = DESCONECTAR_WIFI;  
                              }
@@ -337,8 +337,9 @@ void Inicializar_Wifi(void)
 {
 
   tick_wifi = TICKS_ESPERA_DESCONECTADO;
-//  Estado_Wifi = ESTADO_WIFI_INICIAL;
-  Estado_Wifi = CONECTAR_WIFI;
+  Estado_Wifi = ESTADO_WIFI_INICIAL;
+//  Estado_Wifi = CONECTAR_WIFI;
+  numero_de_SSID = 0;
   Thread_WIFI.onRun(Conexion_WiFi);
   Thread_WIFI.setInterval(TIEMPO_TICKER_WIFI);
   controll.add(&Thread_WIFI);
