@@ -19,6 +19,7 @@
 
 #include <Thread.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266Ping.h>
 #include <WiFiUdp.h>
 #include <Tiempo.h>
 
@@ -30,18 +31,18 @@
 
 
 
-#define NUMERO_INTENTOS_CONEXION_NTP                100
+#define NUMERO_INTENTOS_CONEXION_NTP                20
 
 
 /*--------------------------
      Tiempos Generacion_Hora   
  --------------------------*/
 
-#define TIEMPO_TICKER_GENERACION_HORA               1000     // 1000 milisegundos
+#define TIEMPO_TICKER_GENERACION_HORA               500     // 1000 milisegundos
 
-#define TIEMPO_INICIO_GENERACION_HORA               1        //  (1 segundo)
-#define TIEMPO_TIME_OUT_CALCULAR_HORA               10       //  (90 segundos)
-#define TIEMPO_ESPERA_RECEPCION_HORA                1        //  (2 segundos)
+#define TIEMPO_INICIO_GENERACION_HORA               500        //  (1 segundo)
+#define TIEMPO_TIME_OUT_CALCULAR_HORA               10000       //  (90 segundos)
+#define TIEMPO_ESPERA_RECEPCION_HORA                500        //  (2 segundos)
 
 
 /*--------------------------------------
@@ -49,9 +50,9 @@
  ---------------------------------------*/
 
 
-#define TICKS_INICIO_GENERACION_HORA      TIEMPO_INICIO_GENERACION_HORA     *1000 / TIEMPO_TICKER_GENERACION_HORA
-#define TIME_OUT_CALCULAR_HORA               TIEMPO_TIME_OUT_CALCULAR_HORA        *1000 / TIEMPO_TICKER_GENERACION_HORA
-#define TICKS_ESPERA_RECEPCION_HORA       TIEMPO_ESPERA_RECEPCION_HORA      *1000 / TIEMPO_TICKER_GENERACION_HORA
+#define TICKS_INICIO_GENERACION_HORA      TIEMPO_INICIO_GENERACION_HORA     / TIEMPO_TICKER_GENERACION_HORA
+#define TIME_OUT_CALCULAR_HORA            TIEMPO_TIME_OUT_CALCULAR_HORA     / TIEMPO_TICKER_GENERACION_HORA
+#define TICKS_ESPERA_RECEPCION_HORA       TIEMPO_ESPERA_RECEPCION_HORA      / TIEMPO_TICKER_GENERACION_HORA
 
 // ------------------------------------------------------
 // -               Estados Generacion_Hora                   -
@@ -78,6 +79,7 @@ unsigned char Tick_Generacion_Hora;
 
 WiFiUDP NTP_UDP;                   // Create an instance of the WiFiUDP class to send and receive
 IPAddress NTP_Server_IP(0,0,0,0);          // time.nist.gov NTP server address
+const IPAddress NULL_IP(0,0,0,0);
 //const char* NTP_Server_Name = "time.nist.gov";
 byte NTP_Buffer[NTP_MESSAGE_SIZE]; // buffer to hold incoming and outgoing packets
 unsigned char Intentos_conexion_NTP;
@@ -115,7 +117,8 @@ void Inicializar_Generacion_Hora(void)
 
   Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
   Tick_Generacion_Hora = TICKS_INICIO_GENERACION_HORA;
-  Inicializar_Calculo_Hora();
+//  Inicializar_Servidor_NTP();
+  Fecha_Hora_Actual.Ano = 0;
   Thread_Generacion_Hora.onRun(Generacion_Hora);
   Thread_Generacion_Hora.setInterval(TIEMPO_TICKER_GENERACION_HORA);
   controll.add(&Thread_Generacion_Hora);
@@ -123,7 +126,7 @@ void Inicializar_Generacion_Hora(void)
 
  /* ----------------------------------------------------------------------------------------------
   -                                             -
-  - FunciÃ³n:    void Inicializar_Calculo_Hora(void);                        -
+  - FunciÃ³n:    void Inicializar_Servidor_NTP(void);                        -
   -                                             -
   - AcciÃ³n:     Inicializa el la maquina de estados para medir                 -
   - Recibe:     -                                   -
@@ -137,7 +140,7 @@ void Inicializar_Generacion_Hora(void)
   -                                             -
   ---------------------------------------------------------------------------------------------- */
 
-void Inicializar_Calculo_Hora(void)
+void Inicializar_Servidor_NTP(void)
 {
 
     if(!WiFi.hostByName(NTP_SERVER_NAME, NTP_Server_IP))  // Get the IP address of the NTP server
@@ -150,7 +153,6 @@ void Inicializar_Calculo_Hora(void)
         Serial.println(NTP_Server_IP);
         Serial.println("Calculo de Hora inicializado");
     }
-    Fecha_Hora_Actual.Ano = 0;
     Intentos_conexion_NTP = NUMERO_INTENTOS_CONEXION_NTP;
 }
 
@@ -191,9 +193,12 @@ void Generacion_Hora()
 //------------------------   1   ------------------------------
 Retorno_funcion  Rutina_Estado_PEDIR_HORA(void)
 {
+    PingClass Ping;
 
-    if(NTP_Server_IP != (0,0,0,0))
+    if(NTP_Server_IP != NULL_IP)
     {   
+//        if(Ping.ping("www.google.com"))
+//            Falla_Conexion = false;              
         memset(NTP_Buffer, 0, NTP_MESSAGE_SIZE);  // Vaciar el buffer de NTP
         NTP_Buffer[0] = 0b11100011;       // Initialize values needed to form NTP request LI, Version, Mode
         if(!NTP_UDP.beginPacket(NTP_Server_IP, NTP_SERVICE_PORT)) // NTP requests are to port 123
@@ -204,14 +209,13 @@ Retorno_funcion  Rutina_Estado_PEDIR_HORA(void)
         {
             Serial.printf("Fallo el envio de datos UDP al servidor NTP\n");
             NTP_UDP.stop();
-            Inicializar_Calculo_Hora();  
             Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
         }
         Tick_Generacion_Hora = TICKS_ESPERA_RECEPCION_HORA;
     }
     else
     {
-        Inicializar_Calculo_Hora();  
+        Inicializar_Servidor_NTP();  
         Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
     }
     return Puntero_Proximo_Estado_Generacion_Hora;
@@ -222,13 +226,15 @@ Retorno_funcion  Rutina_Estado_PEDIR_HORA(void)
 Retorno_funcion  Rutina_Estado_LEER_HORA(void)
 {
 
-
-      if (NTP_UDP.parsePacket() < NTP_MESSAGE_SIZE)  
+      int Packet_Size;
+      Packet_Size = NTP_UDP.parsePacket(); 
+      if (Packet_Size < NTP_MESSAGE_SIZE)  
       {    
-          Serial.printf("Faltan recibir datos del NTP, se recibieron %d bytes vuelvo a pedir hora\n",NTP_UDP.parsePacket()); 
+          Serial.printf("Faltan recibir datos del NTP, se recibieron %d bytes vuelvo a pedir hora\n",Packet_Size); 
           if(!--Intentos_conexion_NTP) 
           { 
               Falla_Conexion = true;              
+              Inicializar_Servidor_NTP();  
 
   //            ESP.restart();
           } 

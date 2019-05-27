@@ -65,13 +65,7 @@ typedef void(*Retorno_funcion)(void);
 Retorno_funcion   Rutina_Estado_INICIALIZACION_BROKER_MQTT(void);
 Retorno_funcion   Rutina_Estado_CONEXION_BROKER_MQTT(void);
 Retorno_funcion   Rutina_Estado_CLIENTE_LOOP_MQTT(void);
-
-Retorno_funcion   Rutina_Estado_PUBLICAR_LUZ_MQTT(void);
-Retorno_funcion   Rutina_Estado_PUBLICAR_RUIDO_MQTT(void);
-Retorno_funcion   Rutina_Estado_PUBLICAR_GAS1_MQTT(void);
-Retorno_funcion   Rutina_Estado_PUBLICAR_GAS2_MQTT(void);
-Retorno_funcion   Rutina_Estado_PUBLICAR_TEMPERATURA_MQTT(void);
-Retorno_funcion   Rutina_Estado_PUBLICAR_HUMEDAD_MQTT(void);
+Retorno_funcion   Rutina_Estado_PUBLICAR_MQTT(void);
 
 Retorno_funcion Puntero_Proximo_Estado_Cliente_MQTT;
 
@@ -112,9 +106,10 @@ PubSubClient client_MQTT(espClient);
 
 
 //extern unsigned char Num_Sensor;
-extern struct Informacion_Sensor Data_Sensor[CANTIDAD_SENSORES];
+extern struct Informacion_Sensor Data_Sensor[ULTIMO_SENSOR];
 extern bool Falla_Conexion;
 unsigned char Conexiones_MQTT=0;
+extern struct Tiempo Fecha_Hora_Actual;
 
 
 /* ----------------------------------------------------------------------------------------------
@@ -215,39 +210,38 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
     }
     else
     {  
-        if(!client_MQTT.connected())
+//        Serial.println(F("Intento conexion MQTT"));
+        Serial.printf("Heap size para la conexion MQTT : %u\n", ESP.getFreeHeap());
+//        espClient.setX509Time(Fecha_Hora_Actual.Reloj_UNIX);
+        if(client_MQTT.connect(CLIENT_ID))//, Topic_LW, 1, true, LW_Msg, true))
         {
-            Serial.print(F("MQTT No conectado, status rc=")); 
-            Serial.println(client_MQTT.state()); 
-            Serial.println(F("Intento conexion MQTT"));
-            Serial.printf("Heap size para la conexion MQTT : %u\n", ESP.getFreeHeap());
-            if(client_MQTT.connect(CLIENT_ID))//, Topic_LW, 1, true, LW_Msg, true))
-            {
-                Serial.println(F("Conexion MQTT exitosa"));
-                if(Conexiones_MQTT++ >= 6)
-                    ESP.restart();
-                Falla_Conexion = false;
-                Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
-            }
-            else
-            {            
-                Serial.println(F("Conexion MQTT fallida"));
-                Serial.print("failed, rc="); 
-                Serial.println(client_MQTT.state()); 
-                Falla_Conexion = true;
-    //              client_MQTT.disconnect();
-                Serial.printf("heap size despues de desconexion MQTT: %u\n", ESP.getFreeHeap());
-    
-                Tick_Cliente_MQTT = TICKS_ESPERA_PARA_CONECTAR;
-                Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
-            }    
+            Serial.println(F("Conexion MQTT exitosa"));
+            if(Conexiones_MQTT++ >= 6)
+                ESP.restart();
+            Falla_Conexion = false;
+            Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
         }
         else
-          Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
-    }
+        {            
+            Serial.println(F("Conexion MQTT fallida"));
+            Serial.print("failed, rc="); 
+            Serial.println(client_MQTT.state()); 
+            Falla_Conexion = true;
+//            client_MQTT.disconnect();
+            Serial.printf("heap size luego de conexion MQTT fallida: %u\n", ESP.getFreeHeap());
 
+            Tick_Cliente_MQTT = TICKS_ESPERA_PARA_CONECTAR;
+            Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+        }    
+
+    }
     if(ESP.getFreeHeap() > 33000)
-        ESP.restart();
+    {
+        espClient.stop();
+//        client_MQTT.disconnect();
+//        ESP.restart();
+        Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_INICIALIZACION_BROKER_MQTT;
+    }
 
     return Puntero_Proximo_Estado_Cliente_MQTT;
 
@@ -256,22 +250,25 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
 //------------------------     3      ------------------------------
 Retorno_funcion  Rutina_Estado_CLIENTE_LOOP_MQTT(void)
 {      
-      Serial.printf("Heap size previo a MQTT Loop: %u\n", ESP.getFreeHeap());
-      if(!client_MQTT.loop())
-      {
-         Serial.println("Detecto desconexion en MQTT Loop");
-         Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
-      }
-      else        
-      {
-          Tick_Cliente_MQTT = TICKS_ESPERA_PARA_PUBLICAR;
-          Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_PUBLICAR_LUZ_MQTT;
-      }
-      return Puntero_Proximo_Estado_Cliente_MQTT;
+    Serial.printf("Heap size previo a MQTT Loop: %u\n", ESP.getFreeHeap());
+    if(!client_MQTT.loop())
+    {
+       Serial.println(F("Detecto desconexion en MQTT Loop"));
+       Serial.print(F("MQTT No conectado, status rc=")); 
+       Serial.println(client_MQTT.state()); 
+       Falla_Conexion = true;
+       Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+    }
+    else        
+    {
+        Tick_Cliente_MQTT = TICKS_ESPERA_PARA_PUBLICAR;
+        Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_PUBLICAR_MQTT;
+    }
+    return Puntero_Proximo_Estado_Cliente_MQTT;
 }
 
 //------------------------     4     ------------------------------
-Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
+Retorno_funcion  Rutina_Estado_PUBLICAR_MQTT(void)
 {
 
   
@@ -279,7 +276,7 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_LUZ_MQTT(void)
       char Topic_Data_Char[20]= TOPIC_DATA;
       Serial.printf("Publicacion MQTT heap size: %u\n", ESP.getFreeHeap());
 
-      for(int i=0; i<CANTIDAD_SENSORES; i++)
+      for(int i=0; i<ULTIMO_SENSOR; i++)
       {
              if(strlen(Data_Sensor[i].JSON_Serializado) > 10)
              {

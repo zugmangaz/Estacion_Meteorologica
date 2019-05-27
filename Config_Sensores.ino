@@ -83,7 +83,8 @@ void Config_Sensores(void);
 ----------------------------------*/
 
 extern unsigned char Num_Sensor;
-extern struct Informacion_Sensor Data_Sensor[CANTIDAD_SENSORES];
+//extern Numeracion_Sensor Num_Sensor;
+extern struct Informacion_Sensor Data_Sensor[ULTIMO_SENSOR];
 extern struct Tiempo Fecha_Hora_Actual;
 
 Thread Thread_Config_Sensores = Thread();
