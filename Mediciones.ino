@@ -19,7 +19,7 @@
  */
 #include <MAX11603.h>
 #include <DHT_U.h>
-#include <Adafruit_TSL2561_U.h>
+//#include <Adafruit_TSL2561_U.h>
 #include <Thread.h>
 #include <math.h>
 #include <Tiempo.h>
@@ -45,7 +45,7 @@
 #define SENSOR_GAS1             5
 //#define SENSOR_GAS2             6
 
-#define CANTIDAD_SENSORES       5
+#define ULTIMO_SENSOR       5
 */
 
 /*---------------------------------
@@ -135,7 +135,7 @@ void Enviar_Medicion(void);
 Thread Thread_Mediciones = Thread();
 
 extern class DHT_Unified Sensor_De_Humedad;
-extern class Adafruit_TSL2561_Unified Sensor_De_Luz_TSL;
+//extern class Adafruit_TSL2561_Unified Sensor_De_Luz_TSL;
 
 class Lista Lista_Mediciones;
 
@@ -145,7 +145,7 @@ unsigned char Num_Sensor;
 //enum Numeracion_Sensor {SENSOR_TEMPERATURA, SENSOR_HUMEDAD, SENSOR_ILUMINACION, SENSOR_SONIDO, SENSOR_GAS1, SENSOR_GAS2} Num_Sensor;
 
 
-struct Informacion_Sensor Data_Sensor[CANTIDAD_SENSORES];
+struct Informacion_Sensor Data_Sensor[ULTIMO_SENSOR];
 //const struct Informacion_Sensor Data_Basica = {1,"","","",0,25,25,25,25,25,25,25,25,"",TICKS_MAX_SIN_PUBLICACIONES,""};
 extern struct Tiempo Fecha_Hora_Actual;
 extern byte Mac_Address[LONGITUD_MAC_ADDRESS+1];
@@ -159,10 +159,10 @@ unsigned char Gas1;
 unsigned char Gas2;
 float PPM_Gas1;
 float PPM_Gas2;
-sensors_event_t Evento_Luz;
+//sensors_event_t Evento_Luz;
 sensors_event_t Evento_Humedad;
 sensors_event_t Evento_Temperatura;
-uint16_t Luz_broadband, Luz_ir;
+//uint16_t Luz_broadband, Luz_ir;
 
 //char *Buffer_Medicion_a_Guaradar;
 
@@ -222,7 +222,7 @@ void Inicializar_Mediciones(void)
   Tick_Mediciones = TICKS_ESPERA_INICIAL;
   Time_Out_Sin_Mediciones = TICKS_PERIODO_MEDICIONES;
   Inicializar_ADC();
-  for(Num_Sensor=0; Num_Sensor<CANTIDAD_SENSORES; Num_Sensor++)
+  for(Num_Sensor=0; Num_Sensor<ULTIMO_SENSOR; Num_Sensor++)
   {
       strcpy(Data_Sensor[Num_Sensor].Status,"normal");
       Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones = TICKS_MAX_SIN_PUBLICACIONES;  
@@ -256,7 +256,7 @@ void Inicializar_Mediciones(void)
 
 void Maquina_Mediciones()
 {
-  for(Num_Sensor=0; Num_Sensor<CANTIDAD_SENSORES; Num_Sensor++)
+  for(Num_Sensor=0; Num_Sensor<ULTIMO_SENSOR; Num_Sensor++)
   {     
       if(Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones)
           Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones--;
@@ -376,7 +376,7 @@ Retorno_funcion  Rutina_Estado_LEER_MEDICION_HUMEDAD(void)
   Serial.printf("Corrected_Rs = %8.2f \n",MQ135_Corrected_Rs);
   PPM_Gas1 = MQ135_Scaling_Factor * pow((float)MQ135_Corrected_Rs / MQ135_R_O, MQ135_Exponential_Factor);
 
-#if CANTIDAD_SENSORES == 6
+#ifdef SENSOR_GAS2
 
   MQ135_Rs = ((float)ADC_FULL_SCALE/(float)Gas2 - 1)* MQ135_R_L;
   MQ135_Corrected_Rs = MQ135_Rs/(1.6979 - 0.012*Evento_Temperatura.temperature - 0.00612*Evento_Humedad.relative_humidity);
@@ -384,7 +384,7 @@ Retorno_funcion  Rutina_Estado_LEER_MEDICION_HUMEDAD(void)
 
 #endif
 
-  Tick_Mediciones = TICKS_HABILITAR_LUZ;         
+  Tick_Mediciones = TICKS_EVALUAR_PUBLICACION;         
   Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_EVALUAR_PUBLICACION;
   return Puntero_Proximo_Estado_Mediciones;
 
@@ -459,7 +459,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
       Alerta_Mediciones = false;
       Falla_Sensores = 0;
 
-      for(Num_Sensor=0; Num_Sensor<CANTIDAD_SENSORES; Num_Sensor++)
+      for(Num_Sensor=0; Num_Sensor<ULTIMO_SENSOR; Num_Sensor++)
       {
           Data_Sensor[Num_Sensor].Lectura_Anterior = Data_Sensor[Num_Sensor].Lectura_Sensor;
 //          Serial.printf("Sensor: %d, Lectura Anterior: %8.2f \n",Data_Sensor[Num_Sensor].Numero_Sensor, Data_Sensor[Num_Sensor].Lectura_Anterior);
@@ -469,23 +469,25 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
           
           switch(Num_Sensor)       // Guardo Lecturas y verifico fallas en sensores
           {
-              case 0:     // Sensor numero 1-Temperatura
+              case SENSOR_TEMPERATURA:     // Sensor numero 1-Temperatura
                     Data_Sensor[Num_Sensor].Lectura_Sensor = Evento_Temperatura.temperature;
                     if(isnan(Data_Sensor[Num_Sensor].Lectura_Sensor) || Data_Sensor[Num_Sensor].Lectura_Sensor == UMBRAL_FALLA_SENSOR_TEMPERATURA)
                     {    
+                        Data_Sensor[Num_Sensor].Lectura_Sensor = 0;
                         Falla_Sensores += 1 << Num_Sensor;
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
-              case 1:     // Sensor numero 2-Humedad
-                    Data_Sensor[Num_Sensor].Lectura_Sensor = Evento_Temperatura.relative_humidity;
+              case SENSOR_HUMEDAD:     // Sensor numero 2-Humedad
+                    Data_Sensor[Num_Sensor].Lectura_Sensor = Evento_Humedad.relative_humidity;
                     if(isnan(Data_Sensor[Num_Sensor].Lectura_Sensor) || Data_Sensor[Num_Sensor].Lectura_Sensor == UMBRAL_FALLA_SENSOR_HUMEDAD)
                     {    
+                        Data_Sensor[Num_Sensor].Lectura_Sensor = 0;
                         Falla_Sensores += 1 << Num_Sensor;
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
-              case 2:     // Sensor numero 3-Iluminacion
+/*              case SENSOR_LUZ:     // Sensor numero 3-Iluminacion
                     Data_Sensor[Num_Sensor].Lectura_Sensor = Evento_Luz.light;
                     if(Data_Sensor[Num_Sensor].Lectura_Sensor > UMBRAL_FALLA_SENSOR_ILUMINACION)
                     {    
@@ -493,7 +495,8 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
-              case 3:     // Sensor numero 4-Sonido
+*/
+              case SENSOR_SONIDO:     // Sensor numero 4-Sonido
                     Data_Sensor[Num_Sensor].Lectura_Sensor = Ruido_dB;
                     if(Data_Sensor[Num_Sensor].Lectura_Sensor < UMBRAL_FALLA_SENSOR_SONIDO)
                     {    
@@ -501,7 +504,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
-              case 4:     // Sensor numero 5-Gas1
+              case SENSOR_GAS1:     // Sensor numero 5-Gas1
                     Data_Sensor[Num_Sensor].Lectura_Sensor = PPM_Gas1;
                     if(Data_Sensor[Num_Sensor].Lectura_Sensor > UMBRAL_FALLA_SENSOR_GAS1)
                     {    
@@ -509,7 +512,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
-              case 5:
+/*              case SENSOR_GAS2:
                     Data_Sensor[Num_Sensor].Lectura_Sensor = PPM_Gas2;
                     if(Data_Sensor[Num_Sensor].Lectura_Sensor > UMBRAL_FALLA_SENSOR_GAS2)
                     {    
@@ -517,6 +520,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
+*/
               default:
                     break;
           }
