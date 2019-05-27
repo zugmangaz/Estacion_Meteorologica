@@ -28,7 +28,7 @@ ThreadController controll = ThreadController();
 
 extern void  Inicializar_Terminal();
 extern void  Inicializar_Sensor_Humedad();
-extern void  Inicializar_TSL256x();
+//extern void  Inicializar_TSL256x();
 extern void  Inicializar_Wifi();
 extern void  Inicializar_I2C_Bus();
 extern void  Inicializar_Mediciones();
@@ -48,7 +48,7 @@ void setup() {
   Inicializar_Terminal();
   Inicializar_File_System();
   Inicializar_Sensor_Humedad();
-  Inicializar_TSL256x();
+//  Inicializar_TSL256x();
   Inicializar_I2C_Bus();
   Inicializar_Wifi();
   Inicializar_EEPROM();
@@ -56,6 +56,7 @@ void setup() {
   Inicializar_Mediciones();
   Inicializar_Cliente_MQTT();
   Inicializar_Config_Sensores();
+  Inicializar_Generacion_Hora();
   Serial.printf("Tamano heap al inicio: %u\n", ESP.getFreeHeap());
  
 }

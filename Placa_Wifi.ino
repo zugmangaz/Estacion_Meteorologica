@@ -263,9 +263,6 @@ void Conexion_WiFi(void)
 //                                      Serial.println(Direccion_IP);
                                       Falla_Conexion = false;
 
-                                      Inicializar_Generacion_Hora();
-                                      
-//                                      time_out = TICKS_ESPERAR_CONEXION_CLIENTE_TIMEOUT;
                                       tick_wifi = TICKS_VERIFICAR_CONEXION_WIFI;
                                       Estado_Wifi = VERIFICAR_CONEXION_WIFI;
                                       
