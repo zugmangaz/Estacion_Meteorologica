@@ -95,9 +95,6 @@
 
 Thread Thread_WIFI = Thread();
 
-//IPAddress Direccion_IP;
-
-//WiFiClient Cliente_SSID;
 ESP8266WebServer  SSID_Server(80);
 
 char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = { "TP-Link_Extender",  "DiwaIT"      , "TP-LINK_493C42"} ;
@@ -118,6 +115,34 @@ char Intentos_Conexion = 0;
 
 bool Falla_Conexion = true;
 
+/* ----------------------------------------------------------------------------------------------
+  -                                             -
+  - FunciÃ³n:    void Inicializar_Wifi(void);                        -
+  -                                             -
+  - AcciÃ³n:     Inicializa el la maquina de estados Wifi                 -
+  - Recibe:     -                                   -
+  - Devuelve:   -                                   -
+  - Modifica:   Estado_wifi                              -
+  - Destruye:   -                                     -
+  - Llama a:    -                                     -
+  - Llamada por:  Setup                                  -
+  - Macros usados:  -                                   -
+  - Nivel de STACK:                                    -
+  -                                             -
+  ---------------------------------------------------------------------------------------------- */
+
+void Inicializar_Wifi(void)
+{
+
+  tick_wifi = TICKS_ESPERA_DESCONECTADO;
+//  Estado_Wifi = ESTADO_WIFI_INICIAL;
+  Estado_Wifi = CONECTAR_WIFI;
+  numero_de_SSID = 0;
+  Thread_WIFI.onRun(Conexion_WiFi);
+  Thread_WIFI.setInterval(TIEMPO_TICKER_WIFI);
+  controll.add(&Thread_WIFI);
+
+}
 
 /* ----------------------------------------------------------------------------------------------
   -                                             -
@@ -125,17 +150,13 @@ bool Falla_Conexion = true;
   -                                               -
   - AcciÃ³n:     Administra la conexion del wifi.                                -
   -                                               -
-  -         Si el Estado esta fuera de rango reinicializa la Botonera y retorna.  -
-  -                                             -
-  -         En funciÃ³n del Estado Actual y de la ExcitaciÃ³n Actualiza las Variables -
-  -         y las Salidas de Control y retorna.                   -
   -                                             -
   - Recibe:     -                                   -
   - Devuelve:   -                                   -
-  - Modifica:   estado / tick / columna                         -
-  - Destruye:   -                           -
-  - Llama a:    InicializarTitilarLuces / EncenderColor                 -
-  - Llamada por:  IntTimer0                               -
+  - Modifica:                                                                                   -
+  - Destruye:   -                                                                               -
+  - Llama a:                                                                                    -
+  - Llamada por:                                                                                -
   - Macros usados:  -                                   -
   - Nivel de STACK: 2 Bytes                                   -
   -                                             -
@@ -179,7 +200,7 @@ void Conexion_WiFi(void)
               case CONEXION_SOFT_AP:
                              if(--time_out)
                              {
-                                  Serial.printf("Time out %d \n", time_out);       
+                                  Serial.printf("Time out Access Point Habilitado: %d \n", time_out);       
                                   if (WiFi.softAPgetStationNum())
                                   { 
                                         Serial.println(F("WebServer iniciado..."));
@@ -208,7 +229,7 @@ void Conexion_WiFi(void)
               case CONFIGURAR_SSID:
                              if(--time_out)
                              {
-                                  Serial.printf("Time out %d \n", time_out);       
+                                  Serial.printf("Time out sitio configuracion SSID: %d \n", time_out);       
                                   SSID_Server.handleClient();
                                   tick_wifi = TICKS_CONFIGURAR_SSID;                             
                              }
@@ -284,13 +305,14 @@ void Conexion_WiFi(void)
               case VERIFICAR_CONEXION_WIFI:
                             if(WiFi.status() != WL_CONNECTED)// || Falla_Conexion) 
                             {
-                               tick_wifi = TICKS_ESPERA_DESCONECTADO;
-                               Estado_Wifi = DESCONECTAR_WIFI;  
+                                Falla_Conexion = true;
+                                tick_wifi = TICKS_ESPERA_DESCONECTADO;
+                                Estado_Wifi = DESCONECTAR_WIFI;  
                             }
                             else
                             {
-                              tick_wifi = TICKS_VERIFICAR_CONEXION_WIFI;
-                              Estado_Wifi = VERIFICAR_CONEXION_WIFI;
+                                tick_wifi = TICKS_VERIFICAR_CONEXION_WIFI;
+                                Estado_Wifi = VERIFICAR_CONEXION_WIFI;
                             }
                             break;
 
@@ -314,34 +336,6 @@ void Conexion_WiFi(void)
       }  
 }         
 
-/* ----------------------------------------------------------------------------------------------
-  -                                             -
-  - FunciÃ³n:    void Inicializar_Wifi(void);                        -
-  -                                             -
-  - AcciÃ³n:     Inicializa el la maquina de estados Wifi                 -
-  - Recibe:     -                                   -
-  - Devuelve:   -                                   -
-  - Modifica:   Estado_wifi                              -
-  - Destruye:   -                                     -
-  - Llama a:    -                                     -
-  - Llamada por:  Setup                                  -
-  - Macros usados:  -                                   -
-  - Nivel de STACK:                                    -
-  -                                             -
-  ---------------------------------------------------------------------------------------------- */
-
-void Inicializar_Wifi(void)
-{
-
-  tick_wifi = TICKS_ESPERA_DESCONECTADO;
-//  Estado_Wifi = ESTADO_WIFI_INICIAL;
-  Estado_Wifi = CONECTAR_WIFI;
-  numero_de_SSID = 0;
-  Thread_WIFI.onRun(Conexion_WiFi);
-  Thread_WIFI.setInterval(TIEMPO_TICKER_WIFI);
-  controll.add(&Thread_WIFI);
-
-}
 
 /* ----------------------------------------------------------------------------------------------
   -                                             -
@@ -406,6 +400,20 @@ void Inicializar_SSID_Server(void)
 
 }
 
+/* ----------------------------------------------------------------------------------------------
+  -                                                                                             -
+  - FunciÃ³n:    void WebSite_SSID_Conf(void);                                                  -
+  -                                                                                             -
+  - AcciÃ³n:    Envia el sitio de configuración                                                 -
+  - Recibe:     -                                                                               -
+  - Devuelve:   -                                                                               -
+  - Modifica:   -                                                                               -
+  - Destruye:   -                                                                               -
+  - Llama a:    -                                                                               -
+  - Llamada por:  SSID_Server.on();                                                             -
+  - Macros usados:  -                                                                           -
+  -                                                                                             -
+  ---------------------------------------------------------------------------------------------- */
 
 void WebSite_SSID_Conf(void)
 {
@@ -417,22 +425,32 @@ void WebSite_SSID_Conf(void)
     Serial.println(F("Envio Pagina de Inicio \n"));
     SSID_Server.send(200, "text/html", Portal_Configuracion.readString());
     Portal_Configuracion.close();
-//    Armar_Pagina();
 
 }
 
+/* ----------------------------------------------------------------------------------------------
+  -                                                                                             -
+  - FunciÃ³n:    void Guardar_SSID(void);                                                       -
+  -                                                                                             -
+  - AcciÃ³n:    Guarda el SSID y Password en la memoria ROM y envia página de confirmación      -
+  - Recibe:     -                                                                               -
+  - Devuelve:   -                                                                               -
+  - Modifica:   -                                                                               -
+  - Destruye:   -                                                                               -
+  - Llama a:    -                                                                               -
+  - Llamada por:  SSID_Server.on();                                                             -
+  - Macros usados:  -                                                                           -
+  -                                                                                             -
+  ---------------------------------------------------------------------------------------------- */
 
 void Guardar_SSID(void)
 {
     File Portal_Configuracion = SPIFFS.open("/Configuracion_Guardada.html", "r");
     Serial.println(SSID_Server.arg("SSID"));//Recibimos los valores que envia por GET el formulario web
-//--> Usar otro metodo realizado por mi    
     Guardar_EEPROM(0,SSID_Server.arg("SSID"));
     Serial.println(SSID_Server.arg("Password"));
-//--> Usar otro metodo realizado por mi        
     Guardar_EEPROM(LONGITUD_SSID,SSID_Server.arg(F("Password")));
   
-//    mensaje = "Configuracion Guardada...";
     SSID_Server.send(200, "text/html",  Portal_Configuracion.readString());
     Portal_Configuracion.close();
 
@@ -440,18 +458,28 @@ void Guardar_SSID(void)
 
 }
 
+/* ----------------------------------------------------------------------------------------------
+  -                                                                                             -
+  - FunciÃ³n:    void Salir_de_Config(void);                                                    -
+  -                                                                                             -
+  - AcciÃ³n:    Envia pagina de finalización de configuración                                   -
+  - Recibe:     -                                                                               -
+  - Devuelve:   -                                                                               -
+  - Modifica:   -                                                                               -
+  - Destruye:   -                                                                               -
+  - Llama a:    -                                                                               -
+  - Llamada por:  SSID_Server.on();                                                             -
+  - Macros usados:  -                                                                           -
+  -                                                                                             -
+  ---------------------------------------------------------------------------------------------- */
+
 
 void Salir_de_Config()
 {
 
         File Portal_Configuracion = SPIFFS.open(F("/Salir_de_Configuracion.html"), "r");
-//      Serial.printf("Envio Pagina de Inicio \n");
-//      mensaje = "Configuracion Finalizada...";
         SSID_Server.send(200, "text/html",  Portal_Configuracion.readString());
-//      Armar_Pagina();
 
         Portal_Configuracion.close();
-  
-//      Estado_Wifi = CONECTAR_WIFI;
-      time_out = 5;                             
+        time_out = 5;                             
 }
