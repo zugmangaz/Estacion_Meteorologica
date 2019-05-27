@@ -533,36 +533,37 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
               Data_Sensor[Num_Sensor].Variacion_Medicion *= -1;
 
 //          Serial.printf("Variacion: %8.2f \n",Data_Sensor[Num_Sensor].Variacion_Medicion);
+          Serial.printf("Evaluando Sensor: %d\n",Num_Sensor);
           
 // Verifico si alguna de las siguientes condiciones se cumple para realizar una publicacion
           if(Data_Sensor[Num_Sensor].Variacion_Medicion > Data_Sensor[Num_Sensor].Delta)      // 1 - Variacion mayor al Delta
           {
                 Alerta_Mediciones = true;
-                Serial.println(F("Alerta de Medicion \n"));
+                Serial.println(F("Alerta de Medicion: Delta \n"));
                 Enviar_Medicion();
           }
           else if(Data_Sensor[Num_Sensor].Lectura_Sensor > Data_Sensor[Num_Sensor].Highest)   // 2 - Medicion mayor a Highest
           {
                 Alerta_Mediciones = true;
-                Serial.println(F("Alerta de Medicion \n"));
+                Serial.println(F("Alerta de Medicion: Highest \n"));
                 Enviar_Medicion();
           }
           else if(Data_Sensor[Num_Sensor].Lectura_Sensor > Data_Sensor[Num_Sensor].High)      // 3 - Medicion mayor a High
           {
                 Alerta_Mediciones = true;
-                Serial.println(F("Alerta de Medicion \n"));
+                Serial.println(F("Alerta de Medicion: High \n"));
                 Enviar_Medicion();
           }
           else if(Data_Sensor[Num_Sensor].Lectura_Sensor < Data_Sensor[Num_Sensor].Low)       // 4 - Medicion menor a Low
           {
                 Alerta_Mediciones = true;
-                Serial.println(F("Alerta de Medicion \n"));
+                Serial.println(F("Alerta de Medicion: Low \n"));
                 Enviar_Medicion();
           }
           else if(Data_Sensor[Num_Sensor].Lectura_Sensor < Data_Sensor[Num_Sensor].Lowest)    // 5 - Medicion menor a Lowest
           {
                 Alerta_Mediciones = true;
-                Serial.println(F("Alerta de Medicion \n"));
+                Serial.println(F("Alerta de Medicion: Lowest \n"));
                 Enviar_Medicion();
           }
           else if(!strcmp(Data_Sensor[Num_Sensor].Status,"outofservice"))                     // 6 - Status igual a outofservice
