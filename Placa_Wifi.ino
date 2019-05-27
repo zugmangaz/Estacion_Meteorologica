@@ -67,10 +67,10 @@
 #define TIEMPO_CONFIGURAR_SSID_TIMEOUT                  600000      // (600000 milisegundos)
 #define TIEMPO_ESPERAR_CONEXION_WIFI                    1000       // (1000 milisegundo)
 #define TIEMPO_CONECTANDO_TIMEOUT                       45000      // (10000 milisegundos)
-#define TIEMPO_VERIFICAR_CONEXION_WIFI                  60000      // (60000 milisegundos)
+#define TIEMPO_VERIFICAR_CONEXION_WIFI                  500      // (60000 milisegundos)
 
 
-#define TIEMPO_TICKER_WIFI  100                // tiempo en milisegundos
+#define TIEMPO_TICKER_WIFI                              100        // tiempo en milisegundos
 
 
 /*--------------------------------------
