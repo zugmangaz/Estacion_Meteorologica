@@ -216,7 +216,7 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
         if(client_MQTT.connect(CLIENT_ID))//, Topic_LW, 1, true, LW_Msg, true))
         {
             Serial.println(F("Conexion MQTT exitosa"));
-            if(Conexiones_MQTT++ >= 6)
+            if(Conexiones_MQTT++ >= 20)
                 ESP.restart();
             Falla_Conexion = false;
             Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
@@ -314,7 +314,7 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_MQTT(void)
        
        }
          
-      Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CONEXION_BROKER_MQTT;
+      Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
       return Puntero_Proximo_Estado_Cliente_MQTT;
   
 }
