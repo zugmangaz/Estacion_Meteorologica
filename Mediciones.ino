@@ -475,6 +475,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                     {    
                         Data_Sensor[Num_Sensor].Lectura_Sensor = 0;
                         Falla_Sensores += 1 << Num_Sensor;
+                        Serial.printf("Falla sensor de Temp: %d\n",Falla_Sensores);
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
@@ -484,6 +485,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                     {    
                         Data_Sensor[Num_Sensor].Lectura_Sensor = 0;
                         Falla_Sensores += 1 << Num_Sensor;
+                        Serial.printf("Falla sensor de Humedad: %d\n",Falla_Sensores);
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
@@ -501,6 +503,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                     if(Data_Sensor[Num_Sensor].Lectura_Sensor < UMBRAL_FALLA_SENSOR_SONIDO)
                     {    
                         Falla_Sensores += 1 << Num_Sensor;
+                        Serial.printf("Falla sensor de Sonido: %d\n",Falla_Sensores);
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
@@ -509,6 +512,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                     if(Data_Sensor[Num_Sensor].Lectura_Sensor > UMBRAL_FALLA_SENSOR_GAS1)
                     {    
                         Falla_Sensores += 1 << Num_Sensor;
+                        Serial.printf("Falla sensor de Gas1: %d\n",Falla_Sensores);
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
                     }
                     break;
