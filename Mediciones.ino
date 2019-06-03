@@ -319,7 +319,7 @@ Retorno_funcion  Rutina_Estado_LEER_MEDICION_ADC(void)
           Gas1 =       RetirarDatoColaReciboI2C();
           Gas2 =       RetirarDatoColaReciboI2C();
     
-          Ruido_dB = 20*log10((float)Envolvente/ADC_FULL_SCALE);
+          Ruido_dB = 40*log10((float)Envolvente)+10;
 
           Tick_Mediciones = TICKS_MEDIR_TEMP_HUMEDAD;     
           Serial.printf("Datos!!! %d %3.2f dB %d %d \n",Audio, Ruido_dB, Gas1, Gas2);
