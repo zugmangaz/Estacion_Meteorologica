@@ -536,7 +536,20 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
           Serial.printf("Evaluando Sensor: %d\n",Num_Sensor);
           
 // Verifico si alguna de las siguientes condiciones se cumple para realizar una publicacion
-          if(Data_Sensor[Num_Sensor].Variacion_Medicion > Data_Sensor[Num_Sensor].Delta)      // 1 - Variacion mayor al Delta
+          if(!strcmp(Data_Sensor[Num_Sensor].Status,"outofservice"))                     // 6 - Status igual a outofservice
+          {    
+              Serial.printf("El Sensor %d estaba Fallando. Status actual: %d\n",Num_Sensor,Falla_Sensores);
+              if(! (Falla_Sensores & (1 << Num_Sensor)) )                                  // Si dejo de Fallar el sensor 
+                 strcpy(Data_Sensor[Num_Sensor].Status,"onservice");                     // 7 - Status igual a onservice
+              Enviar_Medicion();
+          }
+          else if(Fecha_Hora_Actual.Hora == 23 && Fecha_Hora_Actual.Minuto == 59)             // 8 - Hora 23:59
+                  Enviar_Medicion();
+          else if(Fecha_Hora_Actual.Hora == 00 && Fecha_Hora_Actual.Minuto == 00)             // 9 - Hora 00:00
+                  Enviar_Medicion();
+          else if(!Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones)                        // 10 - Sin publicaciones por 10 minutos
+                  Enviar_Medicion();
+          else if(Data_Sensor[Num_Sensor].Variacion_Medicion > Data_Sensor[Num_Sensor].Delta)      // 1 - Variacion mayor al Delta
           {
                 Alerta_Mediciones = true;
                 Serial.println(F("Alerta de Medicion: Delta \n"));
@@ -566,20 +579,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                 Serial.println(F("Alerta de Medicion: Lowest \n"));
                 Enviar_Medicion();
           }
-          else if(!strcmp(Data_Sensor[Num_Sensor].Status,"outofservice"))                     // 6 - Status igual a outofservice
-               {    
-                   if(! (Falla_Sensores & 1 << Num_Sensor) )                                  // Si dejo de Fallar el sensor 
-                      strcpy(Data_Sensor[Num_Sensor].Status,"onservice");                     // 7 - Status igual a onservice
-                   Enviar_Medicion();
-               }
-          else if(Fecha_Hora_Actual.Hora == 23 && Fecha_Hora_Actual.Minuto == 59)             // 8 - Hora 23:59
-                  Enviar_Medicion();
-          else if(Fecha_Hora_Actual.Hora == 00 && Fecha_Hora_Actual.Minuto == 00)             // 9 - Hora 00:00
-                  Enviar_Medicion();
-          else if(!Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones)                        // 10 - Sin publicaciones por 10 minutos
-                  Enviar_Medicion();
-          else sprintf(Data_Sensor[Num_Sensor].JSON_Serializado,"\0");                        // 11 - Si no hay condiciones para publicar, anulo el JSON
-         
+          else sprintf(Data_Sensor[Num_Sensor].JSON_Serializado,"\0");                        // 11 - Si no hay condiciones para publicar, anulo el JSON         
       }
 
 
