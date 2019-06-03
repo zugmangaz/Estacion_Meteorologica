@@ -40,15 +40,15 @@
 #define VERIFICAR_CONEXION_WIFI 7
 #define ESTADO_WIFI_MAX  VERIFICAR_CONEXION_WIFI + 1
 
-#define ESTADO_WIFI_INICIAL  ACTIVAR_SOFT_AP
-
+//#define ESTADO_WIFI_INICIAL  ACTIVAR_SOFT_AP
+#define ESTADO_WIFI_INICIAL  CONECTAR_WIFI
 
 /*--------------------------
         Redes WiFi   
  --------------------------*/
 
 
-#define CANTIDAD_DE_SSID_A_GUARDAR   4
+#define CANTIDAD_DE_SSID_A_GUARDAR   2
 #define LONGITUD_SSID               50
 #define LONGITUD_MAC_ADDRESS        17
 
@@ -97,8 +97,11 @@ Thread Thread_WIFI = Thread();
 
 ESP8266WebServer  SSID_Server(80);
 
-char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = { "TP-Link_Extender",  "DiwaIT"      , "TP-LINK_493C42"} ;
-char Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID] = { "aa11zz44x.x55",     "DiwaITr0cks" , "notemetasconmigo"};
+//char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = {"TP-LINK_493C42"    , "TP-Link_Extender",  "DiwaIT"       } ;
+//char Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID] = { "notemetasconmigo" , "aa11zz44x.x55"   ,  "DiwaITr0cks"  };
+
+char Tabla_SSID[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID]     = {"TP-LINK_493C42"    } ;
+char Tabla_Password[CANTIDAD_DE_SSID_A_GUARDAR][LONGITUD_SSID] = { "notemetasconmigo" };
 String aux;
 
 const char SSID_Config[LONGITUD_SSID]     = "ExpertaIoT";
@@ -135,8 +138,7 @@ void Inicializar_Wifi(void)
 {
 
   tick_wifi = TICKS_ESPERA_DESCONECTADO;
-//  Estado_Wifi = ESTADO_WIFI_INICIAL;
-  Estado_Wifi = CONECTAR_WIFI;
+  Estado_Wifi = ESTADO_WIFI_INICIAL;
   numero_de_SSID = 0;
   Thread_WIFI.onRun(Conexion_WiFi);
   Thread_WIFI.setInterval(TIEMPO_TICKER_WIFI);
