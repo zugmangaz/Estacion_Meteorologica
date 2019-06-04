@@ -280,14 +280,13 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_MQTT(void)
       {
              if(strlen(Data_Sensor[i].JSON_Serializado) > 10)
              {
-                  if(client_MQTT.publish(Topic_Data_Char, Medicion_Data_Char))
-                      Serial.printf("El JSON se envio satisfatoriamente\n"); 
+                  if(client_MQTT.publish(Topic_Data_Char, Data_Sensor[i].JSON_Serializado))
+                      Serial.printf("JSON se envio desde RAM satisfatoriamente: %s\n",Data_Sensor[i].JSON_Serializado); 
                   else
                   {
                       Serial.printf("Fallo el envio del JSON\n");
                       Lista_Mediciones.Agregar_Dato_Lista(Medicion_Data_Char);
                   }
-                  Serial.printf("JSON Enviado desde RAM: %s\n",Data_Sensor[i].JSON_Serializado);
                   sprintf(Data_Sensor[i].JSON_Serializado,"\0");
              }
 //             else
