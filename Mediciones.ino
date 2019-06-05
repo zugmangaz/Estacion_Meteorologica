@@ -56,8 +56,10 @@
 #define UMBRAL_FALLA_SENSOR_HUMEDAD       NAN
 #define UMBRAL_FALLA_SENSOR_ILUMINACION   0xFFF0
 #define UMBRAL_FALLA_SENSOR_SONIDO        -48
-#define UMBRAL_FALLA_SENSOR_GAS1          4400
-#define UMBRAL_FALLA_SENSOR_GAS2          4400
+#define UMBRAL_INFERIOR_FALLA_SENSOR_GAS1 0
+#define UMBRAL_SUPERIOR_FALLA_SENSOR_GAS1 200000
+#define UMBRAL_INFERIOR_FALLA_SENSOR_GAS2 0
+#define UMBRAL_SUPERIOR_FALLA_SENSOR_GAS2 200000
 
 
 /*--------------------------
@@ -355,20 +357,20 @@ Retorno_funcion  Rutina_Estado_LEER_MEDICION_HUMEDAD(void)
   float PPM_Temp, PPM_Humedad;
   
   if(isnan(Evento_Temperatura.temperature))
-      PPM_Temp = 0;
+      PPM_Temp = 20;
   else
       PPM_Temp = Evento_Temperatura.temperature;
   if(isnan(Evento_Humedad.relative_humidity))
-      PPM_Humedad = 0;
+      PPM_Humedad = 50;
   else
       PPM_Humedad = Evento_Humedad.relative_humidity;
 
   Serial.printf("Temperatura %3.1f ºC \n",Evento_Temperatura.temperature);
   Serial.printf("Humedad %4.1f %% \n",Evento_Humedad.relative_humidity);
 
-//  Ecuaciones  Rs = (ADC_FULL_SCALE(255)/Gas -1) * Rl(20000)
+//  Ecuaciones  Rs = (ADC_FULL_SCALE(255)/Gas -1) * Rl(1000)
 //              Corrected_Rs = Rs/(1.6979 - 0.012 * Temp - 0.00612 * Humedad)
-//              PPM = 121.4517 * (Corrected_Rs / Ro(20000))^-2.78054
+//              PPM = 121.4517 * (Corrected_Rs / Ro(28000))^-2.78054
 
   MQ135_Rs = ((float)ADC_FULL_SCALE/(float)Gas1 - 1)* MQ135_R_L;
   Serial.printf("Rs = %8.2f \n",MQ135_Rs);
@@ -509,7 +511,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                     break;
               case SENSOR_GAS1:     // Sensor numero 5-Gas1
                     Data_Sensor[Num_Sensor].Lectura_Sensor = PPM_Gas1;
-                    if(Data_Sensor[Num_Sensor].Lectura_Sensor > UMBRAL_FALLA_SENSOR_GAS1)
+                    if(Data_Sensor[Num_Sensor].Lectura_Sensor <= UMBRAL_INFERIOR_FALLA_SENSOR_GAS1 || Data_Sensor[Num_Sensor].Lectura_Sensor >= UMBRAL_SUPERIOR_FALLA_SENSOR_GAS1)
                     {    
                         Falla_Sensores += 1 << Num_Sensor;
                         Serial.printf("Falla sensor de Gas1: %d\n",Falla_Sensores);
@@ -518,7 +520,7 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                     break;
 /*              case SENSOR_GAS2:
                     Data_Sensor[Num_Sensor].Lectura_Sensor = PPM_Gas2;
-                    if(Data_Sensor[Num_Sensor].Lectura_Sensor > UMBRAL_FALLA_SENSOR_GAS2)
+                    if(Data_Sensor[Num_Sensor].Lectura_Sensor <= UMBRAL_INFERIOR_FALLA_SENSOR_GAS2 || Data_Sensor[Num_Sensor].Lectura_Sensor >= UMBRAL_SUPERIOR_FALLA_SENSOR_GAS2)
                     {    
                         Falla_Sensores += 1 << Num_Sensor;
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
