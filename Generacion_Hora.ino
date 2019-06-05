@@ -40,7 +40,7 @@
 
 #define TIEMPO_TICKER_GENERACION_HORA               500         // 500 milisegundos
 
-#define TIEMPO_INICIO_GENERACION_HORA               1000        //  (1 segundo)
+#define TIEMPO_PEDIR_HORA                           500        //  (1 segundo)
 #define TIEMPO_TIME_OUT_CALCULAR_HORA               10000       //  (90 segundos)
 #define TIEMPO_ESPERA_RECEPCION_HORA                1000        //  (2 segundos)
 #define TIEMPO_ESPERA_CALCULO_HORA                  1000        //  (1 segundo)
@@ -51,7 +51,7 @@
  ---------------------------------------*/
 
 
-#define TICKS_INICIO_GENERACION_HORA      TIEMPO_INICIO_GENERACION_HORA     / TIEMPO_TICKER_GENERACION_HORA
+#define TICKS_PEDIR_HORA                  TIEMPO_PEDIR_HORA                 / TIEMPO_TICKER_GENERACION_HORA
 #define TIME_OUT_CALCULAR_HORA            TIEMPO_TIME_OUT_CALCULAR_HORA     / TIEMPO_ESPERA_CALCULO_HORA
 #define TICKS_ESPERA_RECEPCION_HORA       TIEMPO_ESPERA_RECEPCION_HORA      / TIEMPO_TICKER_GENERACION_HORA
 #define TICKS_ESPERA_CALCULO_HORA         TIEMPO_ESPERA_CALCULO_HORA        / TIEMPO_TICKER_GENERACION_HORA
@@ -118,7 +118,7 @@ void Inicializar_Generacion_Hora(void)
 {
 
   Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
-  Tick_Generacion_Hora = TICKS_INICIO_GENERACION_HORA;
+  Tick_Generacion_Hora = TICKS_PEDIR_HORA;
 //  Inicializar_Servidor_NTP();
   Fecha_Hora_Actual.Ano = 0;
   Thread_Generacion_Hora.onRun(Generacion_Hora);
@@ -177,9 +177,7 @@ void Inicializar_Servidor_NTP(void)
 
 void Generacion_Hora()
 {
-  if(Tick_Generacion_Hora)
-      Tick_Generacion_Hora--;
-  else
+  if(!--Tick_Generacion_Hora)
       Puntero_Proximo_Estado_Generacion_Hora();
   return;
 }
@@ -218,7 +216,10 @@ Retorno_funcion  Rutina_Estado_PEDIR_HORA(void)
         Serial.printf("Fallo la conexion UDP al servidor NTP\n");
         NTP_UDP.stop();
         if(!Fecha_Hora_Actual.Reloj_UNIX)
-            Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
+        {
+              Tick_Generacion_Hora = TICKS_PEDIR_HORA;
+              Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
+        }
         else
         {
           Tick_Generacion_Hora = TICKS_ESPERA_CALCULO_HORA;
@@ -229,6 +230,7 @@ Retorno_funcion  Rutina_Estado_PEDIR_HORA(void)
     else
     {
         Inicializar_Servidor_NTP();  
+        Tick_Generacion_Hora = TICKS_PEDIR_HORA;
         Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
     }
     return Puntero_Proximo_Estado_Generacion_Hora;
@@ -253,11 +255,15 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
           } 
           if(Fecha_Hora_Actual.Reloj_UNIX) 
           { 
+              Tick_Generacion_Hora = TICKS_ESPERA_CALCULO_HORA;
               Time_Out_Calcular_Hora =  TIME_OUT_CALCULAR_HORA;    
               Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA; 
           } 
           else 
+          {
+              Tick_Generacion_Hora = TICKS_PEDIR_HORA;
               Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;     
+          }
       } 
       else 
       { 
@@ -273,6 +279,7 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
           Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual); 
           Intentos_conexion_NTP = NUMERO_INTENTOS_CONEXION_NTP;
      
+          Tick_Generacion_Hora = TICKS_ESPERA_CALCULO_HORA;
           Time_Out_Calcular_Hora =  TIME_OUT_CALCULAR_HORA;    
           Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA; 
            
@@ -298,7 +305,10 @@ Retorno_funcion  Rutina_Estado_CALCULAR_HORA(void)
           Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
     }
     else
+    {
+          Tick_Generacion_Hora = TICKS_PEDIR_HORA;
           Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
+    }
     return Puntero_Proximo_Estado_Generacion_Hora;
 
 }
