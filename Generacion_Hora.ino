@@ -38,11 +38,11 @@
      Tiempos Generacion_Hora   
  --------------------------*/
 
-#define TIEMPO_TICKER_GENERACION_HORA               500     // 1000 milisegundos
+#define TIEMPO_TICKER_GENERACION_HORA               1000     // 1000 milisegundos
 
-#define TIEMPO_INICIO_GENERACION_HORA               500        //  (1 segundo)
+#define TIEMPO_INICIO_GENERACION_HORA               1000        //  (1 segundo)
 #define TIEMPO_TIME_OUT_CALCULAR_HORA               10000       //  (90 segundos)
-#define TIEMPO_ESPERA_RECEPCION_HORA                500        //  (2 segundos)
+#define TIEMPO_ESPERA_RECEPCION_HORA                1000        //  (2 segundos)
 
 
 /*--------------------------------------
@@ -278,7 +278,7 @@ Retorno_funcion  Rutina_Estado_CALCULAR_HORA(void)
           Calcular_Fecha_Hora(Fecha_Hora_Actual.Reloj_UNIX);
       
           sprintf(Fecha_Hora_Actual.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Actual.Ano, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Hora, Fecha_Hora_Actual.Minuto, Fecha_Hora_Actual.Segundo);
-//          Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
+          Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
       
       //     str_Reloj_UNIX = String(Reloj_UNIX, DEC)
           Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
