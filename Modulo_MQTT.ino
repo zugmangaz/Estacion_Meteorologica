@@ -216,8 +216,8 @@ Retorno_funcion  Rutina_Estado_CONEXION_BROKER_MQTT(void)
         if(client_MQTT.connect(CLIENT_ID))//, Topic_LW, 1, true, LW_Msg, true))
         {
             Serial.println(F("Conexion MQTT exitosa"));
-            if(Conexiones_MQTT++ >= 20)
-                ESP.restart();
+//            if(Conexiones_MQTT++ >= 20)
+//                ESP.restart();
             Falla_Conexion = false;
             Puntero_Proximo_Estado_Cliente_MQTT=(Retorno_funcion)&Rutina_Estado_CLIENTE_LOOP_MQTT;
         }
@@ -274,7 +274,7 @@ Retorno_funcion  Rutina_Estado_PUBLICAR_MQTT(void)
   
       char Medicion_Data_Char[LARGO_BUFFER];
       char Topic_Data_Char[20]= TOPIC_DATA;
-      Serial.printf("Publicacion MQTT heap size: %u\n", ESP.getFreeHeap());
+//      Serial.printf("Publicacion MQTT heap size: %u\n", ESP.getFreeHeap());
 
       for(int i=0; i<ULTIMO_SENSOR; i++)
       {
