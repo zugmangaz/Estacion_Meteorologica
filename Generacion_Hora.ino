@@ -38,11 +38,12 @@
      Tiempos Generacion_Hora   
  --------------------------*/
 
-#define TIEMPO_TICKER_GENERACION_HORA               1000     // 1000 milisegundos
+#define TIEMPO_TICKER_GENERACION_HORA               500         // 500 milisegundos
 
 #define TIEMPO_INICIO_GENERACION_HORA               1000        //  (1 segundo)
 #define TIEMPO_TIME_OUT_CALCULAR_HORA               10000       //  (90 segundos)
 #define TIEMPO_ESPERA_RECEPCION_HORA                1000        //  (2 segundos)
+#define TIEMPO_ESPERA_CALCULO_HORA                  1000        //  (1 segundo)
 
 
 /*--------------------------------------
@@ -51,8 +52,9 @@
 
 
 #define TICKS_INICIO_GENERACION_HORA      TIEMPO_INICIO_GENERACION_HORA     / TIEMPO_TICKER_GENERACION_HORA
-#define TIME_OUT_CALCULAR_HORA            TIEMPO_TIME_OUT_CALCULAR_HORA     / TIEMPO_TICKER_GENERACION_HORA
+#define TIME_OUT_CALCULAR_HORA            TIEMPO_TIME_OUT_CALCULAR_HORA     / TIEMPO_ESPERA_CALCULO_HORA
 #define TICKS_ESPERA_RECEPCION_HORA       TIEMPO_ESPERA_RECEPCION_HORA      / TIEMPO_TICKER_GENERACION_HORA
+#define TICKS_ESPERA_CALCULO_HORA         TIEMPO_ESPERA_CALCULO_HORA        / TIEMPO_TICKER_GENERACION_HORA
 
 // ------------------------------------------------------
 // -               Estados Generacion_Hora                   -
@@ -201,17 +203,28 @@ Retorno_funcion  Rutina_Estado_PEDIR_HORA(void)
 //            Falla_Conexion = false;              
         memset(NTP_Buffer, 0, NTP_MESSAGE_SIZE);  // Vaciar el buffer de NTP
         NTP_Buffer[0] = 0b11100011;       // Initialize values needed to form NTP request LI, Version, Mode
-        if(!NTP_UDP.beginPacket(NTP_Server_IP, NTP_SERVICE_PORT)) // NTP requests are to port 123
-          Serial.printf("Fallo la conexion UDP al servidor NTP\n");
-        Serial.printf("Bytes enviados por UDP %d \n",NTP_UDP.write(NTP_Buffer, NTP_MESSAGE_SIZE));
-        Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_LEER_HORA;
-        if(!NTP_UDP.endPacket())
+        if(NTP_UDP.beginPacket(NTP_Server_IP, NTP_SERVICE_PORT)) // NTP requests are to port 123
         {
-            Serial.printf("Fallo el envio de datos UDP al servidor NTP\n");
-            NTP_UDP.stop();
-            Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
+            Serial.printf("Envio %d Bytes por UDP  \n",NTP_UDP.write(NTP_Buffer, NTP_MESSAGE_SIZE));
+            if(NTP_UDP.endPacket())
+            {
+                Tick_Generacion_Hora = TICKS_ESPERA_RECEPCION_HORA;
+                Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_LEER_HORA;
+                return Puntero_Proximo_Estado_Generacion_Hora;
+            }
+            else
+                Serial.printf("Fallo el envio de datos UDP al servidor NTP\n");
         }
-        Tick_Generacion_Hora = TICKS_ESPERA_RECEPCION_HORA;
+        Serial.printf("Fallo la conexion UDP al servidor NTP\n");
+        NTP_UDP.stop();
+        if(!Fecha_Hora_Actual.Reloj_UNIX)
+            Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
+        else
+        {
+          Tick_Generacion_Hora = TICKS_ESPERA_CALCULO_HORA;
+          Time_Out_Calcular_Hora =  TIME_OUT_CALCULAR_HORA;    
+          Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA; 
+        }
     }
     else
     {
@@ -278,9 +291,10 @@ Retorno_funcion  Rutina_Estado_CALCULAR_HORA(void)
           Calcular_Fecha_Hora(Fecha_Hora_Actual.Reloj_UNIX);
       
           sprintf(Fecha_Hora_Actual.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Actual.Ano, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Hora, Fecha_Hora_Actual.Minuto, Fecha_Hora_Actual.Segundo);
-          Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
+//          Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
       
       //     str_Reloj_UNIX = String(Reloj_UNIX, DEC)
+          Tick_Generacion_Hora = TICKS_ESPERA_CALCULO_HORA;
           Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
     }
     else
