@@ -55,7 +55,7 @@
 #define UMBRAL_FALLA_SENSOR_TEMPERATURA   NAN
 #define UMBRAL_FALLA_SENSOR_HUMEDAD       NAN
 #define UMBRAL_FALLA_SENSOR_ILUMINACION   0xFFF0
-#define UMBRAL_FALLA_SENSOR_SONIDO        -48
+#define UMBRAL_FALLA_SENSOR_SONIDO        -1000
 #define UMBRAL_INFERIOR_FALLA_SENSOR_GAS1 0
 #define UMBRAL_SUPERIOR_FALLA_SENSOR_GAS1 200000
 #define UMBRAL_INFERIOR_FALLA_SENSOR_GAS2 0
@@ -503,7 +503,8 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
               case SENSOR_SONIDO:     // Sensor numero 4-Sonido
                     Data_Sensor[Num_Sensor].Lectura_Sensor = Ruido_dB;
                     if(Data_Sensor[Num_Sensor].Lectura_Sensor < UMBRAL_FALLA_SENSOR_SONIDO)
-                    {    
+                    {   
+                        Data_Sensor[Num_Sensor].Lectura_Sensor = 0; 
                         Falla_Sensores += 1 << Num_Sensor;
                         Serial.printf("Falla sensor de Sonido: %d\n",Falla_Sensores);
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
