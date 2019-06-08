@@ -52,11 +52,11 @@ void setup() {
   Inicializar_I2C_Bus();
   Inicializar_Wifi();
   Inicializar_EEPROM();
+  Inicializar_Generacion_Hora();
+  Inicializar_Config_Sensores();
   Inicializar_Leds1();
   Inicializar_Mediciones();
   Inicializar_Cliente_MQTT();
-  Inicializar_Config_Sensores();
-  Inicializar_Generacion_Hora();
   Serial.printf("Tamano heap al inicio: %u\n", ESP.getFreeHeap());
  
 }
