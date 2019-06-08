@@ -120,7 +120,7 @@ void Inicializar_Generacion_Hora(void)
   Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
   Tick_Generacion_Hora = TICKS_PEDIR_HORA;
 //  Inicializar_Servidor_NTP();
-  Fecha_Hora_Actual.Ano = 0;
+  Fecha_Hora_Actual.Reloj_UNIX = 0;
   Thread_Generacion_Hora.onRun(Generacion_Hora);
   Thread_Generacion_Hora.setInterval(TIEMPO_TICKER_GENERACION_HORA);
   controll.add(&Thread_Generacion_Hora);
