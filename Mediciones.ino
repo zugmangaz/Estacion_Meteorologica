@@ -26,6 +26,7 @@
 #include <MQ135.h>
 #include <Mediciones.h>
 //#include <Lista_Circular_con_Archivo.h>
+#include <FS.h>
 /*--------------------------
      Definiciones   
  --------------------------*/
@@ -34,7 +35,7 @@
 #define CANTIDAD_MEDICIONES_A_GUARDAR   100
 #define BYTES_POR_MEDICION              20
 #define BUFFER_MEDICIONES     BYTES_POR_MEDICION * CANTIDAD_MEDICIONES_A_GUARDAR
-
+#define NOMBRE_ARCHIVO_CONFIGURACIONES  "/Config_Medicion"
 #define LONGITUD_MAC_ADDRESS    17
 
 /*
@@ -61,6 +62,7 @@
 #define UMBRAL_INFERIOR_FALLA_SENSOR_GAS2 0
 #define UMBRAL_SUPERIOR_FALLA_SENSOR_GAS2 200000
 
+#define CONTADOR_FALLA_SONIDO             4320        // 60*24*3 = 4320 (60 Med/Hora * 24 Hora/dia * 3 dia)
 
 /*--------------------------
      Tiempos Mediciones   
@@ -129,6 +131,9 @@ Retorno_funcion   Rutina_Estado_EVALUAR_PUBLICACION(void);
 Retorno_funcion Puntero_Proximo_Estado_Mediciones;
 
 void Enviar_Medicion(void);
+void Guardar_Configuracion_Mediciones(void);
+void Cargar_Configuracion_Mediciones(void);
+
 /*--------------------------------            
 -   Variable de uso del modulo   -
 ----------------------------------*/
@@ -156,6 +161,7 @@ extern byte Mac_Address[LONGITUD_MAC_ADDRESS+1];
 
 unsigned char Audio;
 unsigned char Envolvente;
+unsigned int  Contador_Falla_Ruido = 0;
 float Ruido_dB;
 unsigned char Gas1;
 unsigned char Gas2;
@@ -167,6 +173,7 @@ sensors_event_t Evento_Temperatura;
 //uint16_t Luz_broadband, Luz_ir;
 
 //char *Buffer_Medicion_a_Guaradar;
+
 
 unsigned char Falla_Sensores;
 bool Alerta_Mediciones;
@@ -218,6 +225,7 @@ void Inicializar_Mediciones(void)
 {
 
 //  Wire.begin(MASTER_SDA,MASTER_SCL)             // Define los pines del bus I2C, primero SDA y segundo SCL
+  Cargar_Configuracion_Mediciones();
   Serial.println(F("\nBusco la lista perdida"));
   Lista_Mediciones.Reparar_Lista();
   Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_IDLE_MEDICIONES;
@@ -278,7 +286,7 @@ void Maquina_Mediciones()
 //------------------------   1   ------------------------------
 Retorno_funcion  Rutina_Estado_IDLE_MEDICIONES(void)
 {
-        if(!Data_Sensor[0].Numero_Sensor || Fecha_Hora_Actual.Ano == 0)
+        if(!Data_Sensor[0].Numero_Sensor || Fecha_Hora_Actual.Reloj_UNIX == 0)
         {
             Serial.println(F("No se han configurado los sensores aun, no mido"));
             Tick_Mediciones = TICKS_ESPERA_INICIAL;
@@ -320,7 +328,8 @@ Retorno_funcion  Rutina_Estado_LEER_MEDICION_ADC(void)
           Envolvente=  RetirarDatoColaReciboI2C();
           Gas1 =       RetirarDatoColaReciboI2C();
           Gas2 =       RetirarDatoColaReciboI2C();
-    
+
+              
           Ruido_dB = 40*log10((float)Envolvente)+10;
 
           Tick_Mediciones = TICKS_MEDIR_TEMP_HUMEDAD;     
@@ -501,10 +510,21 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
                     break;
 */
               case SENSOR_SONIDO:     // Sensor numero 4-Sonido
-                    Data_Sensor[Num_Sensor].Lectura_Sensor = Ruido_dB;
-                    if(Data_Sensor[Num_Sensor].Lectura_Sensor < UMBRAL_FALLA_SENSOR_SONIDO)
-                    {   
+                    
+                    if(Ruido_dB < UMBRAL_FALLA_SENSOR_SONIDO)
+                    {
                         Data_Sensor[Num_Sensor].Lectura_Sensor = 0; 
+                        Contador_Falla_Ruido++;
+                    }
+                    else
+                    {
+                        Data_Sensor[Num_Sensor].Lectura_Sensor = Ruido_dB;
+                        Contador_Falla_Ruido = 0;
+                    }
+                        
+                    if(Contador_Falla_Ruido > CONTADOR_FALLA_SONIDO)
+                    {
+                        Contador_Falla_Ruido--;
                         Falla_Sensores += 1 << Num_Sensor;
                         Serial.printf("Falla sensor de Sonido: %d\n",Falla_Sensores);
                         strcpy(Data_Sensor[Num_Sensor].Status,"outofservice");
@@ -543,44 +563,44 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
           Serial.printf("Evaluando Sensor: %d\n",Num_Sensor);
           
 // Verifico si alguna de las siguientes condiciones se cumple para realizar una publicacion
-          if(!strcmp(Data_Sensor[Num_Sensor].Status,"outofservice"))                     // 6 - Status igual a outofservice
+          if(!strcmp(Data_Sensor[Num_Sensor].Status,"outofservice"))                          // 1 - Status igual a outofservice
           {    
               Serial.printf("El Sensor %d estaba Fallando. Status actual: %d\n",Num_Sensor,Falla_Sensores);
-              if(! (Falla_Sensores & (1 << Num_Sensor)) )                                  // Si dejo de Fallar el sensor 
-                 strcpy(Data_Sensor[Num_Sensor].Status,"onservice");                     // 7 - Status igual a onservice
+              if(! (Falla_Sensores & (1 << Num_Sensor)) )                                     // Si dejo de Fallar el sensor 
+                 strcpy(Data_Sensor[Num_Sensor].Status,"onservice");                          // 2 - Status igual a onservice
               Enviar_Medicion();
           }
-          else if(Fecha_Hora_Actual.Hora == 23 && Fecha_Hora_Actual.Minuto == 59)             // 8 - Hora 23:59
+          else if(Fecha_Hora_Actual.Hora == 23 && Fecha_Hora_Actual.Minuto == 59)             // 3 - Hora 23:59
                   Enviar_Medicion();
-          else if(Fecha_Hora_Actual.Hora == 00 && Fecha_Hora_Actual.Minuto == 00)             // 9 - Hora 00:00
+          else if(Fecha_Hora_Actual.Hora == 00 && Fecha_Hora_Actual.Minuto == 00)             // 4 - Hora 00:00
                   Enviar_Medicion();
-          else if(!Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones)                        // 10 - Sin publicaciones por 10 minutos
+          else if(!Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones)                        // 5 - Sin publicaciones por 10 minutos
                   Enviar_Medicion();
-          else if(Data_Sensor[Num_Sensor].Variacion_Medicion > Data_Sensor[Num_Sensor].Delta)      // 1 - Variacion mayor al Delta
+          else if(Data_Sensor[Num_Sensor].Variacion_Medicion > Data_Sensor[Num_Sensor].Delta) // 6 - Variacion mayor al Delta
           {
                 Alerta_Mediciones = true;
                 Serial.println(F("Alerta de Medicion: Delta \n"));
                 Enviar_Medicion();
           }
-          else if(Data_Sensor[Num_Sensor].Lectura_Sensor > Data_Sensor[Num_Sensor].Highest)   // 2 - Medicion mayor a Highest
+          else if(Data_Sensor[Num_Sensor].Lectura_Sensor > Data_Sensor[Num_Sensor].Highest)   // 7 - Medicion mayor a Highest
           {
                 Alerta_Mediciones = true;
                 Serial.println(F("Alerta de Medicion: Highest \n"));
                 Enviar_Medicion();
           }
-          else if(Data_Sensor[Num_Sensor].Lectura_Sensor > Data_Sensor[Num_Sensor].High)      // 3 - Medicion mayor a High
+          else if(Data_Sensor[Num_Sensor].Lectura_Sensor > Data_Sensor[Num_Sensor].High)      // 8 - Medicion mayor a High
           {
                 Alerta_Mediciones = true;
                 Serial.println(F("Alerta de Medicion: High \n"));
                 Enviar_Medicion();
           }
-          else if(Data_Sensor[Num_Sensor].Lectura_Sensor < Data_Sensor[Num_Sensor].Low)       // 4 - Medicion menor a Low
+          else if(Data_Sensor[Num_Sensor].Lectura_Sensor < Data_Sensor[Num_Sensor].Low)       // 9 - Medicion menor a Low
           {
                 Alerta_Mediciones = true;
                 Serial.println(F("Alerta de Medicion: Low \n"));
                 Enviar_Medicion();
           }
-          else if(Data_Sensor[Num_Sensor].Lectura_Sensor < Data_Sensor[Num_Sensor].Lowest)    // 5 - Medicion menor a Lowest
+          else if(Data_Sensor[Num_Sensor].Lectura_Sensor < Data_Sensor[Num_Sensor].Lowest)    // 10 - Medicion menor a Lowest
           {
                 Alerta_Mediciones = true;
                 Serial.println(F("Alerta de Medicion: Lowest \n"));
@@ -594,6 +614,26 @@ Retorno_funcion  Rutina_Estado_EVALUAR_PUBLICACION(void)
       Puntero_Proximo_Estado_Mediciones=(Retorno_funcion)&Rutina_Estado_IDLE_MEDICIONES;
       return Puntero_Proximo_Estado_Mediciones;
 }
+
+
+
+/* ----------------------------------------------------------------------------------------------
+  -                                                                                             -
+  - FunciÃ³n:    void Enviar_Medicion(void);                                                    -
+  -                                                                                             -
+  - AcciÃ³n:    Serializa el JSON. Si no hay conexion guarda la medicion en la lista            -
+  -             Si recupero su funcionamiento, pasa a estado normal                             -
+  - Recibe:     -                                                                               -
+  - Devuelve:   -                                                                               -
+  - Modifica:   Data_Sensor / Lista_Mediciones                                                  -
+  - Destruye:   -                                                                               -
+  - Llama a:    -                                                                               -
+  - Llamada por:  Rutina_Estado_EVALUAR_PUBLICACION                                             -
+  - Macros usados:  -                                                                           -
+  - Nivel de STACK:                                                                             -  
+  -                                                                                             -
+  ---------------------------------------------------------------------------------------------- */
+
 
 
 void Enviar_Medicion(void)
@@ -628,4 +668,105 @@ void Enviar_Medicion(void)
           Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones = TICKS_MAX_SIN_PUBLICACIONES;
           if(!strcmp(Data_Sensor[Num_Sensor].Status,"onservice"))                             // Pasa de estado onservice a normal
                 strcpy(Data_Sensor[Num_Sensor].Status,"normal");
+}
+
+
+
+
+/* ----------------------------------------------------------------------------------------------
+  -                                                                                             -
+  - FunciÃ³n:    void Guardar_Configuracion_Mediciones(void);                                   -
+  -                                                                                             -
+  - AcciÃ³n:    Guarda en el archivo NOMBRE_ARCHIVO_CONFIGURACIONES,                            -
+  -             todas las estructuras de los sensores y Reloj_UNIX                              -
+  - Recibe:     -                                                                               -
+  - Devuelve:   -                                                                               -
+  - Modifica:   -                                                                               -
+  - Destruye:   -                                                                               -
+  - Llama a:    -                                                                               -
+  - Llamada por:  Placa_Wifi                                                                    -
+  - Macros usados:  -                                                                           -
+  - Nivel de STACK:                                                                             -  
+  -                                                                                             -
+  ---------------------------------------------------------------------------------------------- */
+
+
+void Guardar_Configuracion_Mediciones(void)
+{
+    
+    File Archivo_Configuracion_Mediciones = SPIFFS.open(NOMBRE_ARCHIVO_CONFIGURACIONES,"w");
+    if(!Archivo_Configuracion_Mediciones)
+        Serial.println(F("Fallo apertura archivo de configuracion de Medición"));
+    else
+    {
+        for(Num_Sensor=0; Num_Sensor<ULTIMO_SENSOR; Num_Sensor++)
+        {
+              Archivo_Configuracion_Mediciones.write((const uint8_t*)&Data_Sensor[Num_Sensor],sizeof(Informacion_Sensor));
+              Serial.printf("Configuracion escrita del Sensor %d: %s\n",Num_Sensor);
+        }
+        Archivo_Configuracion_Mediciones.write((const uint8_t*)&Fecha_Hora_Actual.Reloj_UNIX,sizeof(Fecha_Hora_Actual.Reloj_UNIX));
+        Archivo_Configuracion_Mediciones.close();
+    }
+  
+}
+
+/* ----------------------------------------------------------------------------------------------
+  -                                                                                             -
+  - FunciÃ³n:    void Cargar_Configuracion_Mediciones(void);                                    -
+  -                                                                                             -
+  - AcciÃ³n:    Busca y lee el archivo NOMBRE_ARCHIVO_CONFIGURACIONES.                          -
+  -             Carga en RAM todas las estructuras de los sensores y Reloj_UNIX                 -
+  - Recibe:     -                                                                               -
+  - Devuelve:   -                                                                               -
+  - Modifica:   -                                                                               -
+  - Destruye:   -                                                                               -
+  - Llama a:    -                                                                               -
+  - Llamada por:  Inicializar_Mediciones()                                                        -
+  - Macros usados:  -                                                                           -
+  - Nivel de STACK:                                                                             -  
+  -                                                                                             -
+  ---------------------------------------------------------------------------------------------- */
+
+void Cargar_Configuracion_Mediciones(void)
+{
+    if(SPIFFS.exists(NOMBRE_ARCHIVO_CONFIGURACIONES))
+    {
+
+        File Archivo_Configuracion_Mediciones = SPIFFS.open(NOMBRE_ARCHIVO_CONFIGURACIONES,"r");
+        if(!Archivo_Configuracion_Mediciones)
+            Serial.println(F("Fallo apertura archivo de configuracion de Medición"));
+        else
+        {
+            Serial.println(F("\nRecupero configuración mediciones"));
+                 
+            for(Num_Sensor=0; Num_Sensor<ULTIMO_SENSOR; Num_Sensor++)
+            {   
+                Archivo_Configuracion_Mediciones.read((uint8_t*)&Data_Sensor[Num_Sensor],sizeof(Informacion_Sensor));
+                Serial.printf("{\n\"nroSensor\":%d,\n\"serial\":\"%s\",\n\"readTime\":\"%s\",\n\"metric\":\"%s\",\n\"value\":%8.2f,\n\"previous value\":%8.2f,\n\"Variacion\":%8.2f,\n\"lowest\":%8.2f,\n\"low\":%8.2f,\n\"high\":%8.2f,\n\"highest\":%8.2f,\n\"delta\":%8.2f,\n\"status\":\"%s\",\n\"Time_Out_Sin_Publicaciones\":%d,\n\"JSON_Serializado\":\"%s\"\n}", \
+                Data_Sensor[Num_Sensor].Numero_Sensor,  \
+                Data_Sensor[Num_Sensor].Sensor_id,      \
+                Data_Sensor[Num_Sensor].Read_Time,      \
+                Data_Sensor[Num_Sensor].Unidad,         \
+                Data_Sensor[Num_Sensor].Lectura_Sensor, \
+                Data_Sensor[Num_Sensor].Lectura_Anterior,\
+                Data_Sensor[Num_Sensor].Variacion_Medicion,\
+                Data_Sensor[Num_Sensor].Lowest,         \
+                Data_Sensor[Num_Sensor].Low,            \
+                Data_Sensor[Num_Sensor].High,           \
+                Data_Sensor[Num_Sensor].Highest,        \
+                Data_Sensor[Num_Sensor].Delta,          \
+                Data_Sensor[Num_Sensor].Status,         \
+                Data_Sensor[Num_Sensor].Time_Out_Sin_Publicaciones,\
+                Data_Sensor[Num_Sensor].JSON_Serializado);
+            }
+        }
+        Archivo_Configuracion_Mediciones.read((uint8_t*)&Fecha_Hora_Actual.Reloj_UNIX,sizeof(Fecha_Hora_Actual.Reloj_UNIX));
+        Serial.printf("Time_EPOC: %lu \n",Fecha_Hora_Actual.Reloj_UNIX++);
+        Fecha_Hora_Actual.Millis_Ultimo_Sinc = millis();    
+        Archivo_Configuracion_Mediciones.close();
+        SPIFFS.remove(NOMBRE_ARCHIVO_CONFIGURACIONES);   // Remuevo el archivo de configuracion de mediciones
+    }
+    else
+        Serial.println(F("\nNo hay configuracion de mediciones guardadas"));
+        
 }
