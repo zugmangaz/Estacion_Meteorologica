@@ -88,6 +88,8 @@
 #define TICKS_CONECTANDO_TIMEOUT                                                        TIEMPO_CONECTANDO_TIMEOUT / TIEMPO_ESPERAR_CONEXION_WIFI
 #define TICKS_VERIFICAR_CONEXION_WIFI                   TICKS_WIFI_POR_SEG            * TIEMPO_VERIFICAR_CONEXION_WIFI  /1000
 
+extern void Guardar_Configuracion_Mediciones(void);
+
 /*--------------------------------            
 -   Variable de uso del modulo   -
 ----------------------------------*/
@@ -326,8 +328,11 @@ void Conexion_WiFi(void)
                             Serial.println("");
                             WiFi.disconnect();
                             WiFi.mode(WIFI_OFF);
-                            if(++Intentos_Conexion > 30)
-                                ESP.restart();
+                            if(++Intentos_Conexion > 100)
+                            {
+                              Guardar_Configuracion_Mediciones();
+                              ESP.restart();
+                            }
                             Falla_Conexion = true;
 
                             tick_wifi = TICKS_ESPERA_DESCONECTADO;
