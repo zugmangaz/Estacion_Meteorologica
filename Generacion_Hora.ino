@@ -116,11 +116,10 @@ int Time_Out_Calcular_Hora;
 
 void Inicializar_Generacion_Hora(void)
 {
-
+  memset(&Fecha_Hora_Actual,0,sizeof(Fecha_Hora_Actual));
   Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
   Tick_Generacion_Hora = TICKS_PEDIR_HORA;
 //  Inicializar_Servidor_NTP();
-  Fecha_Hora_Actual.Reloj_UNIX = 0;
   Thread_Generacion_Hora.onRun(Generacion_Hora);
   Thread_Generacion_Hora.setInterval(TIEMPO_TICKER_GENERACION_HORA);
   controll.add(&Thread_Generacion_Hora);
@@ -217,21 +216,30 @@ Retorno_funcion  Rutina_Estado_PEDIR_HORA(void)
         NTP_UDP.stop();
         if(!Fecha_Hora_Actual.Reloj_UNIX)
         {
-              Tick_Generacion_Hora = TICKS_PEDIR_HORA;
-              Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
+            Tick_Generacion_Hora = TICKS_PEDIR_HORA;
+            Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
         }
         else
         {
-          Tick_Generacion_Hora = TICKS_ESPERA_CALCULO_HORA;
-          Time_Out_Calcular_Hora =  TIME_OUT_CALCULAR_HORA;    
-          Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA; 
+            Tick_Generacion_Hora = TICKS_ESPERA_CALCULO_HORA;
+            Time_Out_Calcular_Hora =  TIME_OUT_CALCULAR_HORA;    
+            Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA; 
         }
     }
     else
     {
         Inicializar_Servidor_NTP();  
-        Tick_Generacion_Hora = TICKS_PEDIR_HORA;
-        Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;    
+        if(!Fecha_Hora_Actual.Reloj_UNIX)
+        {
+            Tick_Generacion_Hora = TICKS_PEDIR_HORA;
+            Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
+        }
+        else
+        {
+            Tick_Generacion_Hora = TICKS_ESPERA_CALCULO_HORA;
+            Time_Out_Calcular_Hora =  TIME_OUT_CALCULAR_HORA;    
+            Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;                   
+        }
     }
     return Puntero_Proximo_Estado_Generacion_Hora;
 
@@ -293,10 +301,11 @@ Retorno_funcion  Rutina_Estado_CALCULAR_HORA(void)
 {   
     if(--Time_Out_Calcular_Hora)
     { 
-          Fecha_Hora_Actual.Reloj_UNIX += (millis() - Fecha_Hora_Actual.Millis_Ultimo_Sinc)/1000;
-          Fecha_Hora_Actual.Millis_Ultimo_Sinc = millis();    
+          Fecha_Hora_Actual.Resto_Millis_Ultimo_Sinc += (millis() - Fecha_Hora_Actual.Millis_Ultimo_Sinc);
+          Fecha_Hora_Actual.Millis_Ultimo_Sinc = millis();
+          Fecha_Hora_Actual.Reloj_UNIX += Fecha_Hora_Actual.Resto_Millis_Ultimo_Sinc/1000;
           Calcular_Fecha_Hora(Fecha_Hora_Actual.Reloj_UNIX);
-      
+          Fecha_Hora_Actual.Resto_Millis_Ultimo_Sinc -= (Fecha_Hora_Actual.Resto_Millis_Ultimo_Sinc/1000)*1000;
           sprintf(Fecha_Hora_Actual.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Actual.Ano, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Hora, Fecha_Hora_Actual.Minuto, Fecha_Hora_Actual.Segundo);
 //          Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
       
