@@ -225,6 +225,7 @@ void Inicializar_Mediciones(void)
 {
 
 //  Wire.begin(MASTER_SDA,MASTER_SCL)             // Define los pines del bus I2C, primero SDA y segundo SCL
+  memset(&Data_Sensor,0,sizeof(Data_Sensor));
   Cargar_Configuracion_Mediciones();
   Serial.println(F("\nBusco la lista perdida"));
   Lista_Mediciones.Reparar_Lista();
