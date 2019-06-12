@@ -88,7 +88,7 @@ extern struct Informacion_Sensor Data_Sensor[ULTIMO_SENSOR];
 extern struct Tiempo Fecha_Hora_Actual;
 
 Thread Thread_Config_Sensores = Thread();
-unsigned char Tick_Config_Sensores;
+unsigned int Tick_Config_Sensores;
 
 extern bool Falla_Conexion;
 
