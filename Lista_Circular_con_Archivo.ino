@@ -125,7 +125,7 @@ Lista::~Lista(void)
    -                                              -
    ---------------------------------------------------------------------------------------------- */
 
-unsigned char Lista::Cantidad_Nodos (void)
+unsigned int Lista::Cantidad_Nodos (void)
 {
     return (Cantidad_Nodos_Lista);
 } 
@@ -156,6 +156,10 @@ unsigned char Lista::Cantidad_Nodos (void)
 
 bool Lista::Agregar_Dato_Lista (char *dato)
 {
+
+  if(Cantidad_Nodos_Lista >= CANTIDAD_MAXIMA_DATOS)
+      return false;
+  
   char Nombre_Archivo_Nuevo[LARGO_NOMBRE_NODOS];
   do  
   {
@@ -300,31 +304,55 @@ bool Lista::Reparar_Lista (void)
 {
 //  struct Nodo *Copia_Dato;
   char Nombre_Archivo_Perdido[LARGO_NOMBRE_NODOS];
+  unsigned int N_Nodos=0;
   
+  for(int i=0; i<CANTIDAD_MAXIMA_DATOS;i++)
+  {
+      sprintf(Nombre_Archivo_Perdido,FORMATO_NOMBRE_ARCHIVO,i);
+      if(SPIFFS.exists(Nombre_Archivo_Perdido))
+          N_Nodos++;
+  }      
+  Serial.printf("Hay %d Nodos\n",N_Nodos);
+  if(!N_Nodos)
+  {
+      Serial.printf("Termino la reparacion de la lista, se recuperaron %d Nodos\n",N_Nodos);
+      return true;
+  }
 
   for(int i=0; i<CANTIDAD_MAXIMA_DATOS;i++)
   {
         sprintf(Nombre_Archivo_Perdido,FORMATO_NOMBRE_ARCHIVO,i);
         if(SPIFFS.exists(Nombre_Archivo_Perdido))
         {
-              Serial.printf("Encontre el Nodo %s\n",Nombre_Archivo_Perdido);
               strcpy(Nombre_Archivo_Salida_Lista,  Nombre_Archivo_Perdido);    // Guardo nueva salida
               do
               {
+                  Serial.printf("Encontre el Nodo %s\n",Nombre_Archivo_Perdido);
                   File Archivo_Perdido = SPIFFS.open(Nombre_Archivo_Perdido,"a+");
                   Cantidad_Nodos_Lista++;
-                  int n;
+//                  int n;
                   Archivo_Perdido.readBytesUntil('\n',Nombre_Archivo_Perdido,LARGO_NOMBRE_NODOS);
                   Nombre_Archivo_Perdido[LARGO_NOMBRE_NODOS-1] = '\0';
+                  Serial.printf("Siguiente Nodo %s\n",Nombre_Archivo_Perdido);
                   if(strcmp( Nombre_Archivo_Perdido,  Nombre_Archivo_Salida_Lista) == 0)
                       sprintf(Nombre_Archivo_Entrada_Lista,"%s",Archivo_Perdido.name());  // Guardo nueva entrada
                       
                   Archivo_Perdido.close();
               }while(strcmp( Nombre_Archivo_Perdido, Nombre_Archivo_Salida_Lista) != 0);
               Serial.printf("Termino la reparacion de la lista, se recuperaron %d Nodos\n",Cantidad_Nodos_Lista);
-              return true;
+//              return true;
         }
   }
-  Serial.printf("Termino la reparacion de la lista, se recuperaron %d Nodos\n",Cantidad_Nodos_Lista);
+  if(N_Nodos != Cantidad_Nodos_Lista)
+  {
+      Serial.println(F("La lista esta corrupta. Se procede a eliminarla"));
+      for(int i=0; i<CANTIDAD_MAXIMA_DATOS;i++)
+      {
+          sprintf(Nombre_Archivo_Perdido,FORMATO_NOMBRE_ARCHIVO,i);
+          if(SPIFFS.exists(Nombre_Archivo_Perdido))
+              SPIFFS.remove(Nombre_Archivo_Perdido);              
+      }
+      return false;      
+  }
   return true;
 }
