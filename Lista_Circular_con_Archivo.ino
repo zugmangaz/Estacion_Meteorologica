@@ -302,7 +302,6 @@ bool Lista::Retirar_Dato_Lista (char *dato)
 
 bool Lista::Reparar_Lista (void)
 {
-//  struct Nodo *Copia_Dato;
   char Nombre_Archivo_Perdido[LARGO_NOMBRE_NODOS];
   unsigned int N_Nodos=0;
   
@@ -330,17 +329,15 @@ bool Lista::Reparar_Lista (void)
                   Serial.printf("Encontre el Nodo %s\n",Nombre_Archivo_Perdido);
                   File Archivo_Perdido = SPIFFS.open(Nombre_Archivo_Perdido,"a+");
                   Cantidad_Nodos_Lista++;
-//                  int n;
                   Archivo_Perdido.readBytesUntil('\n',Nombre_Archivo_Perdido,LARGO_NOMBRE_NODOS);
                   Nombre_Archivo_Perdido[LARGO_NOMBRE_NODOS-1] = '\0';
-                  Serial.printf("Siguiente Nodo %s\n",Nombre_Archivo_Perdido);
                   if(strcmp( Nombre_Archivo_Perdido,  Nombre_Archivo_Salida_Lista) == 0)
                       sprintf(Nombre_Archivo_Entrada_Lista,"%s",Archivo_Perdido.name());  // Guardo nueva entrada
                       
                   Archivo_Perdido.close();
               }while(strcmp( Nombre_Archivo_Perdido, Nombre_Archivo_Salida_Lista) != 0);
               Serial.printf("Termino la reparacion de la lista, se recuperaron %d Nodos\n",Cantidad_Nodos_Lista);
-//              return true;
+              break;
         }
   }
   if(N_Nodos != Cantidad_Nodos_Lista)
