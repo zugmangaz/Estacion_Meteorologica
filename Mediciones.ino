@@ -38,38 +38,14 @@
 #define NOMBRE_ARCHIVO_CONFIGURACIONES  "/Config_Medicion"
 #define LONGITUD_MAC_ADDRESS    17
 
-/*
-#define SENSOR_TEMPERATURA      1
-#define SENSOR_HUMEDAD          2
-#define SENSOR_ILUMINACION      3
-#define SENSOR_SONIDO           4
-#define SENSOR_GAS1             5
-//#define SENSOR_GAS2             6
 
-#define ULTIMO_SENSOR       5
-*/
-
-/*---------------------------------
-     Umbrales de falla sensores   
- ----------------------------------*/
-
-#define UMBRAL_FALLA_SENSOR_TEMPERATURA   NAN
-#define UMBRAL_FALLA_SENSOR_HUMEDAD       NAN
-#define UMBRAL_FALLA_SENSOR_ILUMINACION   0xFFF0
-#define UMBRAL_FALLA_SENSOR_SONIDO        -1000
-#define UMBRAL_INFERIOR_FALLA_SENSOR_GAS1 0
-#define UMBRAL_SUPERIOR_FALLA_SENSOR_GAS1 200000
-#define UMBRAL_INFERIOR_FALLA_SENSOR_GAS2 0
-#define UMBRAL_SUPERIOR_FALLA_SENSOR_GAS2 200000
-
-#define CONTADOR_FALLA_SONIDO             4320        // 60*24*3 = 4320 (60 Med/Hora * 24 Hora/dia * 3 dia)
 
 /*--------------------------
      Tiempos Mediciones   
  --------------------------*/
 
 #define TIEMPO_ESPERA_INICIAL         15000
-#define TIEMPO_PERIODO_MEDICIONES     60000   //  (30000 milisegundos)  
+#define TIEMPO_PERIODO_MEDICIONES     60000   //  (60000 milisegundos)  
 #define TIEMPO_MEDIR_ADC              100       //  (100 milisegundos)
 #define TIEMPO_LECTURA_ADC            100       //  (100 milisegundos)
 #define TIEMPO_MEDIR_TEMP_HUMEDAD     100       //  (100 milisegundos)
@@ -153,7 +129,6 @@ unsigned char Num_Sensor;
 
 
 struct Informacion_Sensor Data_Sensor[ULTIMO_SENSOR];
-//const struct Informacion_Sensor Data_Basica = {1,"","","",0,25,25,25,25,25,25,25,25,"",TICKS_MAX_SIN_PUBLICACIONES,""};
 extern struct Tiempo Fecha_Hora_Actual;
 extern byte Mac_Address[LONGITUD_MAC_ADDRESS+1];
 
@@ -762,7 +737,7 @@ void Cargar_Configuracion_Mediciones(void)
             }
         }
         Archivo_Configuracion_Mediciones.read((uint8_t*)&Fecha_Hora_Actual.Reloj_UNIX,sizeof(Fecha_Hora_Actual.Reloj_UNIX));
-        Serial.printf("Time_EPOC: %lu \n",Fecha_Hora_Actual.Reloj_UNIX++);
+        Serial.printf("Time_EPOC: %lu \n",Fecha_Hora_Actual.Reloj_UNIX+=53);
         Fecha_Hora_Actual.Millis_Ultimo_Sinc = millis();    
         Archivo_Configuracion_Mediciones.close();
         SPIFFS.remove(NOMBRE_ARCHIVO_CONFIGURACIONES);   // Remuevo el archivo de configuracion de mediciones
