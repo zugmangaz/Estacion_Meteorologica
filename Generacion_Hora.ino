@@ -119,7 +119,6 @@ void Inicializar_Generacion_Hora(void)
   memset(&Fecha_Hora_Actual,0,sizeof(Fecha_Hora_Actual));
   Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_PEDIR_HORA;
   Tick_Generacion_Hora = TICKS_PEDIR_HORA;
-//  Inicializar_Servidor_NTP();
   Thread_Generacion_Hora.onRun(Generacion_Hora);
   Thread_Generacion_Hora.setInterval(TIEMPO_TICKER_GENERACION_HORA);
   controll.add(&Thread_Generacion_Hora);
@@ -192,7 +191,7 @@ void Generacion_Hora()
 //------------------------   1   ------------------------------
 Retorno_funcion  Rutina_Estado_PEDIR_HORA(void)
 {
-    PingClass Ping;
+//    PingClass Ping;
 
     if(NTP_Server_IP != NULL_IP)
     {   
@@ -258,8 +257,6 @@ Retorno_funcion  Rutina_Estado_LEER_HORA(void)
           { 
               Falla_Conexion = true;              
               Inicializar_Servidor_NTP();  
-
-  //            ESP.restart();
           } 
           if(Fecha_Hora_Actual.Reloj_UNIX) 
           { 
@@ -309,7 +306,6 @@ Retorno_funcion  Rutina_Estado_CALCULAR_HORA(void)
           sprintf(Fecha_Hora_Actual.Char_Fecha_Hora_Actual,"%04d%02d%02d%02d%02d%02d",Fecha_Hora_Actual.Ano, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Hora, Fecha_Hora_Actual.Minuto, Fecha_Hora_Actual.Segundo);
 //          Serial.printf("%s\n",Fecha_Hora_Actual.Char_Fecha_Hora_Actual);
       
-      //     str_Reloj_UNIX = String(Reloj_UNIX, DEC)
           Tick_Generacion_Hora = TICKS_ESPERA_CALCULO_HORA;
           Puntero_Proximo_Estado_Generacion_Hora=(Retorno_funcion)&Rutina_Estado_CALCULAR_HORA;
     }
