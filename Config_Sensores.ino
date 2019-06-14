@@ -39,7 +39,6 @@
 #define LONGITUD_MAC_ADDRESS    17
 
 #define MIEMBROS_JSON_CONFIGURACION_SENSORES 8
-//#define MIEMBROS_JSON_CONFIGURACION_SENSORES 11
 
 #define CANTIDAD_DE_SENSORES  5
 
@@ -83,7 +82,6 @@ void Config_Sensores(void);
 ----------------------------------*/
 
 extern unsigned char Num_Sensor;
-//extern Numeracion_Sensor Num_Sensor;
 extern struct Informacion_Sensor Data_Sensor[ULTIMO_SENSOR];
 extern struct Tiempo Fecha_Hora_Actual;
 
@@ -178,7 +176,6 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
     }
     http.setReuse(true);
     sprintf(Fecha,"%02d-%02d-%04d-",Fecha_Hora_Actual.Dia, Fecha_Hora_Actual.Mes, Fecha_Hora_Actual.Ano);
-//    Serial.printf("Tamano heap antes de crear el hash: %u\n", ESP.getFreeHeap());
     hasher.update((byte*)Fecha, strlen(Fecha));
     hasher.update(Mac_Address, strlen((const char *)Mac_Address));
     byte hash[SHA256_BLOCK_SIZE];
@@ -191,7 +188,6 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
     for(int i=0; i<SHA256_BLOCK_SIZE;i++)
        pos+=sprintf(Servidor_Configuracion+pos,"%02x",hash[i]);
     
-//    Serial.printf("Tamano heap antes de iniciar cliente HTTP: %u\n", ESP.getFreeHeap());
     http.begin(Servidor_Configuracion);
     httpCode = http.GET();            //Enviar pedido
     Serial.printf("HTTP Code: %d \n",httpCode); 
@@ -199,11 +195,9 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
 //    httpCode = 200;  // ************** Eliminar junto con la linea de abajo
 //    Respuesta_HTTP = String(F("[{\"nroSensor\": 1,\"serial\": \"aa:bb:cc:dd:ee:ff-1\",\"readTime\":\"01/01/19 00:00:00\",\"metric\":\"C\",\"value\": 25.2,\"lowest\": 20,\"low\": 25,\"high\": 30,\"highest\": 50,\"delta\": 5,\"status\": \"normal\"}, {\"nroSensor\": 2,\"serial\": \"aa:bb:cc:dd:ee:ff-2\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"%\",\"value\": 25.2,\"lowest\": 5,\"low\": 15,\"high\": 70,\"highest\": 80,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 3,\"serial\": \"aa:bb:cc:dd:ee:ff-3\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"Lux\",\"value\": 25.2,\"lowest\": 5,\"low\": 5,\"high\": 1000,\"highest\": 10000,\"delta\": 100,\"status\": \"normal\"},{\"nroSensor\": 4,\"serial\": \"aa:bb:cc:dd:ee:ff-4\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"dBR\",\"value\":-25,\"lowest\": -40,\"low\": -20,\"high\": -5,\"highest\": -3,\"delta\": 5,\"status\": \"normal\"},{\"nroSensor\": 5,\"serial\": \"aa:bb:cc:dd:ee:ff-5\",\"readTime\":\"01/01/19 00:00:00\",\"metric\": \"PPM\",\"value\": 25.2,\"lowest\": 10,\"low\": 25,\"high\": 80,\"highest\": 100,\"delta\": 10,\"status\": \"normal\"}]"));
 
-//    Serial.printf("Tamano heap luego de obtener configuraciones: %u\n", ESP.getFreeHeap());
     
     Serial.print(F("Codigo respuesta del servidor:")); //200 is OK
     Serial.println(httpCode);   //Print HTTP return code
-//    Serial.println(Respuesta_HTTP);    //Print request response payload
 
     const char *String_JSON_Buffer;
     
@@ -211,7 +205,6 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
     {
           // Use arduinojson.org/assistant to compute the capacity.
           const size_t capacity = JSON_OBJECT_SIZE(4) + JSON_ARRAY_SIZE(CANTIDAD_DE_SENSORES) + CANTIDAD_DE_SENSORES*JSON_OBJECT_SIZE(MIEMBROS_JSON_CONFIGURACION_SENSORES) + 353;
-//          Serial.printf("Tamano heap antes de crear objeto JSON: %u\n", ESP.getFreeHeap());
 
           StaticJsonDocument<capacity> Configuracion_Sensores;
           // Deserialize JSON object
@@ -242,7 +235,6 @@ Retorno_funcion  Rutina_Estado_PEDIR_CONFIGURACION_SENSORES(void)
 
           }        
           Configuracion_Sensores.clear();
-//          Serial.printf("Tamano heap luego de destruir objeto JSON: %u\n", ESP.getFreeHeap());
           Tick_Config_Sensores = TICKS_RECARGA_CONFIGURACION;
     }
     else
