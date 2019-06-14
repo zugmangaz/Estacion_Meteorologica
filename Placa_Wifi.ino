@@ -328,7 +328,7 @@ void Conexion_WiFi(void)
                             Serial.println("");
                             WiFi.disconnect();
                             WiFi.mode(WIFI_OFF);
-                            if(++Intentos_Conexion > 100)
+                            if(++Intentos_Conexion > 120)
                             {
                               Guardar_Configuracion_Mediciones();
                               ESP.restart();
